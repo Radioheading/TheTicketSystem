@@ -7,6 +7,7 @@
 #include "CacheList.hpp"
 #include "recycle.hpp"
 #include "vector.hpp"
+#include "utils.hpp"
 
 const int max_size = 202, min_size = 101;
 const int max_son = 202, min_son = 101;
@@ -16,48 +17,6 @@ const int max_son = 202, min_son = 101;
  * these are several means to locate specific element
  * including upper_bound, lower_bound, lower_search and binary_search
  */
-template<class T>
-int LowerBound(T val, T *array, int l, int r) {
-  int ans = r + 1;
-  while (l <= r) {
-    int mid = (l + r) >> 1;
-    if (val < array[mid]) {
-      r = mid - 1, ans = mid;
-    } else {
-      l = mid + 1;
-    }
-  }
-  return ans;
-}
-template<class T>
-int UpperBound(T val, T *array, int l, int r) {
-  int ans = 0;
-  while (l <= r) {
-    int mid = (l + r) >> 1;
-    if (!(val < array[mid])) {
-      l = mid + 1, ans = mid;
-    } else {
-      r = mid - 1;
-    }
-  }
-  return ans;
-}
-template<class T>
-int BinarySearch(T val, T *array, int l, int r) {
-  int ans = r + 1;
-  while (l <= r) {
-    int mid = (l + r) >> 1;
-    if (val.key < array[mid].key) {
-      r = mid - 1;
-    } else if (array[mid].key < val.key) {
-      l = mid + 1;
-    } else {
-      r = mid - 1, ans = mid;
-    }
-  }
-  return ans;
-}
-
 template<class Key, class T>
 class BPlusTree {
   enum NodeState { leaf, middle };
@@ -131,6 +90,10 @@ class BPlusTree {
     tree.seekp(root.address);
     tree.write(reinterpret_cast<char *>(&root), node_size);
   };
+
+  void clear() {
+    init();
+  }
 
   void Traverse() {
     std::cout << "traversing\n";

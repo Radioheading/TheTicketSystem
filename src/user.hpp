@@ -169,4 +169,9 @@ class UserSystem {
         username + ' ' + target.GetName() + ' ' + target.GetMailAddr() + ' ' + std::to_string(target.GetPrivilege());
     return ans;
   }
+
+  void clean() {
+    UserMap.clear();
+    LoginState.clear();
+  }
 };
