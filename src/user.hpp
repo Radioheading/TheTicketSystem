@@ -73,7 +73,7 @@ class User {
 
 class UserSystem {
  private:
-  BPlusTree<my_string<20>, User> UserMap;
+  BPlusTree<my_string<20>, my_string<20>, User, 200> UserMap;
   sjtu::map<my_string<20>, int> LoginState;
  public:
   // 1 for successful operation and 0 for unsuccessful

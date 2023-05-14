@@ -188,7 +188,7 @@ class vector {
     // if these two iterators point to different vectors, throw invalid_iterator.
     int operator-(const const_iterator &rhs) const {
       if (from != rhs.from) throw invalid_iterator();
-      return (difference_type) (position - rhs.position);
+      return (position - rhs.position);
     }
     const_iterator &operator+=(const int &n) {
       position += n;

@@ -1,6 +1,8 @@
 #ifndef TRAIN_HPP_
 #define TRAIN_HPP_
 
+#include <utility>
+
 #include "../lib/utils.hpp"
 #include "../lib/bpt.hpp"
 #include "../lib/map.hpp"
@@ -20,6 +22,14 @@ struct Train {
   Date start_sale{}, end_sale{};
   char type{};
 
+  friend bool operator<(const Train &cmp_1, const Train &cmp_2) {
+    return cmp_1.trainID < cmp_2.trainID;
+  }
+
+  friend bool operator==(const Train &cmp_1, const Train &cmp_2) {
+    return cmp_1.trainID == cmp_2.trainID;
+  }
+
   Train &operator=(const Train &other) {
     if (&other == this) return *this;
     release_state = other.release_state, stationNum = other.stationNum, seatNum = other.seatNum, startTime =
@@ -38,6 +48,30 @@ struct Train {
 
 struct train_seat {
   int seat[max_info], station_num = 0, seat_num = 0;
+  Date start_date; // we store the day when the train departs
+  friend bool operator==(const train_seat &cmp_1, const train_seat &cmp_2) {
+    return cmp_1.start_date == cmp_2.start_date;
+  }
+  friend bool operator<(const train_seat &cmp_1, const train_seat &cmp_2) {
+    return cmp_1.start_date < cmp_2.start_date;
+  }
+};
+
+struct id_date {
+  my_string<20> id;
+  Date date; // the day when this train starts
+
+  id_date() = default;
+
+  id_date(const my_string<20> &_id, const Date &_date) : id(_id), date(_date) {}
+
+  friend bool operator<(const id_date &cmp_1, const id_date &cmp_2) {
+    return cmp_1.id < cmp_2.id || cmp_1.id == cmp_2.id && cmp_1.date < cmp_2.date;
+  }
+
+  friend bool operator==(const id_date &cmp_1, const id_date &cmp_2) {
+    return cmp_1.id == cmp_2.id && cmp_1.date == cmp_2.date;
+  }
 };
 
 int available(const train_seat &seat, int l, int r) {
@@ -65,11 +99,52 @@ struct station_train {
   }
 };
 
+struct ticket_info {
+  my_string<20> train_id;
+  Time depart, arrive;
+  int price, seat, duration;
+
+  ticket_info(const my_string<20> &_train_id,
+              Time _depart,
+              Time _arrive,
+              int _price,
+              int _seat,
+              int _duration)
+      : train_id(_train_id),
+        depart(std::move(_depart)),
+        arrive(std::move(_arrive)),
+        price(_price),
+        seat(_seat),
+        duration(_duration) {}
+
+  friend bool operator!=(const ticket_info &cmp_1, const ticket_info &cmp_2) {
+    return !(cmp_1.train_id == cmp_2.train_id) || cmp_1.depart != cmp_2.depart;
+  }
+  static bool TimeFirst(const ticket_info &cmp_1, const ticket_info &cmp_2) {
+    return cmp_1.duration < cmp_2.duration || cmp_1.duration == cmp_2.duration && cmp_1.train_id < cmp_2.train_id;
+  }
+
+  static bool CostFirst(const ticket_info &cmp_1, const ticket_info &cmp_2) {
+    return cmp_1.price < cmp_2.price || cmp_1.price == cmp_2.price && cmp_1.train_id < cmp_2.train_id;
+  }
+};
+
+static bool (*TimeCmp)(const ticket_info &, const ticket_info &) {
+    ticket_info::TimeFirst
+};
+
+static bool (*CostCmp)(const ticket_info &, const ticket_info &) {
+    ticket_info::CostFirst
+};
+
+struct 
+
 class TrainSystem {
  private:
   BPlusTree<my_string<20>, Train> TrainMap;
-  BPlusTree<my_string<20>, train_seat> SeatMap;
+  BPlusTree<id_date, train_seat> SeatMap;
   MultiBPlusTree<my_string<40>, station_train> StationPass;
+ public:
  public:
   TrainSystem(const std::string &name_1,
               const std::string &name_2,
@@ -83,10 +158,10 @@ class TrainSystem {
                  int station_num,
                  int seat_num,
                  std::string *station,
-                 int *price,
+                 const int *price,
                  int start_time,
-                 int *travel_times,
-                 int *stopover_times,
+                 const int *travel_times,
+                 const int *stopover_times,
                  Date begin_date,
                  Date end_date,
                  char _type) {
@@ -134,6 +209,7 @@ class TrainSystem {
                                        i,
                                        res.startTime));
     }
+
     return true;
   }
 
@@ -144,10 +220,10 @@ class TrainSystem {
       return "-1";
     } else {
       std::string ans;
-      train_seat the_seat = SeatMap.find(id);
-      ans += (std::string) ret.trainID + ' ' + ret.type + '\n';
+      train_seat the_seat = SeatMap.find(id_date(id, date));
+      ans += (std::string) ret.trainID + ' ' + ret.type;
       for (int i = 1; i <= ret.stationNum; ++i) {
-        ans += (std::string) ret.stations[i] + ' ';
+        ans += '\n' + (std::string) ret.stations[i] + ' ';
         if (i == 1) {
           ans += "xx-xx xx:xx";
         } else {
@@ -172,7 +248,8 @@ class TrainSystem {
 
   std::string query_ticket(const std::string &start, const std::string &end, const Date &date, bool order) {
     my_string<40> depart(start), arrive(end);
-    sjtu::vector<station_train> depart_list = StationPass.find(depart), arrive_list = StationPass.find(arrive), ans;
+    sjtu::vector<station_train> depart_list = StationPass.find(depart), arrive_list = StationPass.find(arrive);
+    sjtu::vector<ticket_info> tickets;
     for (auto iter_1 = depart_list.begin(), iter_2 = arrive_list.begin(); iter_1 != depart_list.end(); ++iter_1) {
       for (; iter_2 != arrive_list.end() && (*iter_2).train_id < (*iter_1).train_id; ++iter_2);
       if (iter_2 == arrive_list.end()) {
@@ -184,17 +261,32 @@ class TrainSystem {
         Time start_left(ret.start_sale, ret.startTime / 60, ret.startTime % 60),
             start_right(ret.end_sale, ret.startTime / 60, ret.startTime % 60);
         start_left += (*iter_1).leave, start_right += (*iter_1).leave;
-        if (start_left <= date && date <= start_right && ret.release_state) { // totally right
-          ans.push_back(*iter_1);
+        if (leq_day(start_left, date) && geq_day(start_right, date) && ret.release_state) { // totally right
+          Date real_start = ret.start_sale + (date - start_left.day);
+          train_seat the_seat = SeatMap.find(id_date(ret.trainID, real_start));
+          tickets.push_back(ticket_info(ret.trainID,
+                                        Time(date, start_left.now / 60, start_left.now % 60),
+                                        Time(date, start_left.now / 60, start_left.now % 60)
+                                            + ((*iter_2).arrive - (*iter_1).leave),
+                                        (*iter_2).prices_sum - (*iter_1).prices_sum,
+                                        available(the_seat, (*iter_1).rank, (*iter_2).rank),
+                                        (*iter_2).arrive - (*iter_1).leave));
         }
       }
     }
     // todo sorting the vector
-    std::string out = std::to_string(ans.size());
-    for (auto iter = ans.begin(); iter != ans.end(); ++iter) {
-      out += '\n' + (std::string) (*iter).train_id + ' ' + start + std::string(date)
-          + Time(date, (*iter).start_time + (*iter).)
+    if (order) {
+      sort(tickets.begin(), tickets.end(), TimeCmp);
+    } else {
+      sort(tickets.begin(), tickets.end(), CostCmp);
     }
+    std::string out = std::to_string(tickets.size());
+    for (auto iter = tickets.begin(); iter != tickets.end(); ++iter) {
+      out +=
+          '\n' + (std::string) (*iter).train_id + ' ' + start + ' ' + std::string((*iter).depart) + " -> " + end + ' '
+              + std::string((*iter).arrive) + ' ' + std::to_string((*iter).price) + ' ' + std::to_string((*iter).seat);
+    }
+    return out;
   }
 
   std::string query_transfer(const std::string &start, const std::string &end, const Date &date, bool order) {
@@ -220,7 +312,7 @@ class TrainSystem {
 
   }
 
-  std::string refund_ticket(const std::string &username) {
+  void clean() {
 
   }
 };

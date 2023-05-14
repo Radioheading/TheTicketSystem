@@ -277,7 +277,7 @@ class Program {
       }
     } else if (op == "clean") {
       user_system.clean();
-      // todo train_system.clean();
+      train_system.clean();
     } else if (op == "exit") {
       output += "bye";
     }
