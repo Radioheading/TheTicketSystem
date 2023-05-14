@@ -1,5 +1,5 @@
-#ifndef BPT_HPP_
-#define BPT_HPP_
+#ifndef MULTIBPT_HPP_
+#define MULTIBPT_HPP_
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -7,59 +7,15 @@
 #include "CacheList.hpp"
 #include "recycle.hpp"
 #include "vector.hpp"
-#include "utils.hpp"
 
-const int max_size = 202, min_size = 101;
-const int max_son = 202, min_son = 101;
 
 /*
  * @supplementary functions
  * these are several means to locate specific element
  * including upper_bound, lower_bound, lower_search and binary_search
  */
-template<class T>
-int LowerBound(T val, T *array, int l, int r) {
-  int ans = r + 1;
-  while (l <= r) {
-    int mid = (l + r) >> 1;
-    if (val < array[mid]) {
-      r = mid - 1, ans = mid;
-    } else {
-      l = mid + 1;
-    }
-  }
-  return ans;
-}
-template<class T>
-int UpperBound(T val, T *array, int l, int r) {
-  int ans = 0;
-  while (l <= r) {
-    int mid = (l + r) >> 1;
-    if (!(val < array[mid])) {
-      l = mid + 1, ans = mid;
-    } else {
-      r = mid - 1;
-    }
-  }
-  return ans;
-}
-template<class T>
-int BinarySearch(T val, T *array, int l, int r) {
-  int ans = r + 1;
-  while (l <= r) {
-    int mid = (l + r) >> 1;
-    if (val.key < array[mid].key) {
-      r = mid - 1;
-    } else if (array[mid].key < val.key) {
-      l = mid + 1;
-    } else {
-      r = mid - 1, ans = mid;
-    }
-  }
-  return ans;
-}
 template<class Key, class T>
-class BPlusTree {
+class MultiBPlusTree {
   enum NodeState { leaf, middle };
  private:
   bin tree_bin, data_bin;
@@ -82,7 +38,7 @@ class BPlusTree {
       value = obj.value;
       return *this;
     }
-    element() : key(Key()), value(T()) {}
+    element() : key(""), value(T()) {}
     element(const Key &index, const T &number) : key(index), value(number) {}
   };
   struct node {
@@ -112,12 +68,11 @@ class BPlusTree {
   const int leaf_size = sizeof(leaves);
   CachePool<node> node_cache;
   CachePool<leaves> leaf_cache;
-  int size = 0;
  public:
   friend class CachePool<node>;
   friend class CachePool<leaves>;
   node root;
-  BPlusTree(const std::string &_tree_name, const std::string &_data_name)
+  MultiBPlusTree(const std::string &_tree_name, const std::string &_data_name)
       : tree_name(_tree_name),
         data_name(_data_name),
         tree_bin(_tree_name + "'s garbage"),
@@ -126,15 +81,11 @@ class BPlusTree {
         leaf_cache(data) {
     init();
   }
-  ~BPlusTree() {
+  ~MultiBPlusTree() {
     UpdateTree(), UpdateData();
     tree.seekp(root.address);
     tree.write(reinterpret_cast<char *>(&root), node_size);
   };
-
-  void clear() {
-    init();
-  }
 
   void Traverse() {
     std::cout << "traversing\n";
@@ -155,32 +106,43 @@ class BPlusTree {
     }
   }
 
-  T find(const Key &key) {
+  sjtu::vector<T> find(const Key &key) {
     element another(key, T());
+    sjtu::vector<T> ret;
     current_node = root;
     while (current_node.state != leaf) {
       if (current_node.son_num == 0) {
-        return T();
+        return ret;
       }
       int place = LowerBound(another, current_node.index, 1, current_node.son_num - 1);
       ReadNode(current_node, current_node.son_pos[place]);
       WriteNode(current_node);
     }
     if (current_node.son_num == 0) {
-      return T();
+      return ret;
     }
     int search = LowerBound(another, current_node.index, 1, current_node.son_num - 1);
     ReadLeaf(current_leaf, current_node.son_pos[search]);
     int pos = BinarySearch(another, current_leaf.storage, 1, current_leaf.data_num);
-    if (current_leaf.storage[pos].key == key) {
-      return current_leaf.storage[pos].value;
-    } else {
-      return T();
+    while (true) {
+      for (int i = pos; i <= current_leaf.data_num; ++i) {
+        if (current_leaf.storage[i].key == key) {
+          ret.push_back(current_leaf.storage[i].value);
+        } else {
+          WriteLeaves(current_leaf);
+          return ret;
+        }
+      }
+      WriteLeaves(current_leaf);
+      if (current_leaf.next_pos) { // getting next leaf
+        ReadLeaf(current_leaf, current_leaf.next_pos);
+        pos = 1;
+      } else break;
     }
+    return ret;
   }
 
   void insert(const Key &key, const T &val) {
-    ++size;
     element another(key, val);
     if (root.son_num == 0) { // nothing exist, first insert
       leaves first_leaf(false);
@@ -241,17 +203,6 @@ class BPlusTree {
     }
   }
 
-  void modify(const Key &key, const T &val, const T &new_val) {
-    erase(key, val), insert(key, new_val);
-  }
-
-  bool empty() const {
-    return !size;
-  }
-
-  int capacity() const {
-    return size;
-  }
  private:
   void init() {
     tree.open(tree_name), data.open(data_name);
@@ -384,7 +335,6 @@ class BPlusTree {
       for (int i = search; i < todo_leaf.data_num; ++i) {
         todo_leaf.storage[i] = todo_leaf.storage[i + 1];
       }
-      --size;
       --todo_leaf.data_num, todo_leaf.changed = true;
       if (todo_leaf.data_num < min_size) {
         // std::cout << "adjusting" << '\n';
@@ -625,4 +575,4 @@ class BPlusTree {
     data.write(reinterpret_cast<char *>(&tree_begin), sizeof(tree_begin));
   }
 };
-#endif //BPT__BPT_HPP_
+#endif

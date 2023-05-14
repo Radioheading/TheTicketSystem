@@ -1,3 +1,6 @@
+#ifndef TOKENSCANNER_HPP_
+#define TOKENSCANNER_HPP_
+
 #include <string>
 #include <cstring>
 
@@ -8,9 +11,13 @@ class TokenScanner {
   char delim = ' ';
   int pos = 0;
  public:
-  TokenScanner(const std::string _info = "", char _delim = ' ')
+  TokenScanner(const std::string &_info = "", char _delim = ' ')
       : info(_info), delim(_delim), pos(0), length(info.length()) {}
   ~TokenScanner() = default;
+
+  void set(const std::string &_info = "", char _delim = ' ') {
+    info = _info, delim = _delim, length = _info.length(), pos = 0;
+  }
 
   std::string NextToken() {
     std::string ret;
@@ -44,5 +51,9 @@ class TokenScanner {
     return true;
   }
 
-
+  char GetChar() {
+    return info[pos++];
+  }
 };
+
+#endif

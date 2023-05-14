@@ -1,3 +1,6 @@
+#ifndef USER_HPP_
+#define USER_HPP_
+
 #include "../lib/utils.hpp"
 #include "../lib/bpt.hpp"
 #include "../lib/map.hpp"
@@ -74,6 +77,7 @@ class UserSystem {
   sjtu::map<my_string<20>, int> LoginState;
  public:
   // 1 for successful operation and 0 for unsuccessful
+  UserSystem(const std::string &name_1, const std::string &name_2) : UserMap(name_1, name_2) {}
   bool add_user(const std::string &cur,
                 const std::string &username,
                 const std::string &password,
@@ -89,12 +93,12 @@ class UserSystem {
       auto target = UserMap.find(todo);
       if (target.GetPrivilege() != -1 || LoginState.find(cur_name) == LoginState.end()
           || privilege >= LoginState[cur_name]) {
-        throw sjtu::exception();
+        return false;
       }
-      User to_add(username, password, name, mailAddr, privilege);
-      UserMap.insert(username, to_add);
     }
-
+    User to_add(username, password, name, mailAddr, real_privilege);
+    UserMap.insert(username, to_add);
+    return true;
   }
 
   bool login(const std::string &username, const std::string &password) {
@@ -175,3 +179,4 @@ class UserSystem {
     LoginState.clear();
   }
 };
+#endif
