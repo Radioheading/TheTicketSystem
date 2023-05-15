@@ -133,6 +133,7 @@ class BPlusTree {
   };
 
   void clear() {
+    leaf_cache.clear(), node_cache.clear();
     init();
   }
 

@@ -39,7 +39,6 @@ class MultiBPlusTree {
       return *this;
     }
     element() : key(Key()), value(T()) {}
-    element(const Key &index, const std::string &_value) : key(index), value(_value) {}
     element(const Key &index, const T &number) : key(index), value(number) {}
   };
   struct node {
@@ -145,7 +144,7 @@ class MultiBPlusTree {
 
   template<class Key_1>
   T find_unique(const Key &key, const Key_1 &key_1) {
-    element another(key, key_1);
+    element another(key, T(key_1));
     current_node = root;
     while (current_node.state != leaf) {
       if (current_node.son_num == 0) {
@@ -227,6 +226,11 @@ class MultiBPlusTree {
       new_root.address = root.address;
       root = new_root;
     }
+  }
+
+  void clear() {
+    leaf_cache.clear(), node_cache.clear();
+    init();
   }
 
  private:

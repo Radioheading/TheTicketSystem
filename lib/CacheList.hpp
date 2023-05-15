@@ -55,6 +55,18 @@ class CachePool {
       delete now, delete head;
     }
 
+    void ClearPool() {
+      size = 0;
+      cache_node *now = head->next;
+      while (now != tail) {
+        cache_node *temp = now;
+        now = now->next;
+        delete temp;
+      }
+      out.close();
+      head->next = tail, tail->prev = head;
+    }
+
     void erase(cache_node *todo) {
       todo->prev->next = todo->next;
       todo->next->prev = todo->prev;
@@ -165,6 +177,9 @@ class CachePool {
   void Erase(T &todo) {
     cache_node *temp = find(todo.address).first;
     Delete(temp);
+  }
+  void clear() {
+    block_pool.ClearPool();
   }
 };
 #endif //BPT__CACHELIST_HPP_
