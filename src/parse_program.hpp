@@ -11,7 +11,9 @@ class Program {
   TokenScanner my_scanner;
  public:
   Program() : user_system("UserTree", "UserData"),
-              train_system("TrainTree", "TrainData", "SeatTree", "SeatData", "StationTree", "StationData") {}
+              train_system("TrainTree", "TrainData", "SeatTree", "SeatData",
+                           "StationTree", "StationData", "OrderTree", "OrderData",
+                           "PendingTree", "PendingDate") {}
 
   void GetNew(const std::string &info) {
     my_scanner.set(info, ' ');
@@ -256,11 +258,15 @@ class Program {
         if (op1 == "-t") to = my_scanner.NextToken();
         if (op1 == "-q") wait = my_scanner.NextToken() == "true" ? true : false;
       }
-      output += train_system.buy_ticket(username, train_id, date, from, to, wait, num, time_stamp);
+      if (user_system.check_user(username)) {
+        output += train_system.buy_ticket(username, train_id, date, from, to, wait, num, time_stamp);
+      }
     } else if (op == "query_order") {
       std::string username;
       my_scanner.NextToken(), username = my_scanner.NextToken();
-      output += train_system.query_order(username);
+      if (user_system.check_user(username)) {
+        output += train_system.query_order(username);
+      }
     } else if (op == "refund_ticket") {
       std::string op1, username;
       int num;
@@ -270,10 +276,12 @@ class Program {
       } else {
         num = my_scanner.NextInteger(), my_scanner.NextToken(), username = my_scanner.NextToken();
       }
-      if (train_system.refund_ticket(username, num)) {
-        output += "0";
-      } else {
-        output += "-1";
+      if (user_system.check_user(username)) {
+        if (train_system.refund_ticket(username, num)) {
+          output += "0";
+        } else {
+          output += "-1";
+        }
       }
     } else if (op == "clean") {
       user_system.clean();

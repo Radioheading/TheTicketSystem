@@ -73,7 +73,7 @@ class User {
 
 class UserSystem {
  private:
-  BPlusTree<my_string<20>, my_string<20>, User, 200> UserMap;
+  BPlusTree<my_string<20>, User> UserMap;
   sjtu::map<my_string<20>, int> LoginState;
  public:
   // 1 for successful operation and 0 for unsuccessful
@@ -99,6 +99,12 @@ class UserSystem {
     User to_add(username, password, name, mailAddr, real_privilege);
     UserMap.insert(username, to_add);
     return true;
+  }
+
+  bool check_user(const std::string &username) {
+    my_string<20> todo(username);
+    User res = UserMap.find(todo);
+    return res.GetPrivilege() != -1;
   }
 
   bool login(const std::string &username, const std::string &password) {

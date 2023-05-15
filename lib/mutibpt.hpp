@@ -38,7 +38,8 @@ class MultiBPlusTree {
       value = obj.value;
       return *this;
     }
-    element() : key(""), value(T()) {}
+    element() : key(Key()), value(T()) {}
+    element(const Key &index, const std::string &_value) : key(index), value(_value) {}
     element(const Key &index, const T &number) : key(index), value(number) {}
   };
   struct node {
@@ -140,6 +141,31 @@ class MultiBPlusTree {
       } else break;
     }
     return ret;
+  }
+
+  template<class Key_1>
+  T find_unique(const Key &key, const Key_1 &key_1) {
+    element another(key, key_1);
+    current_node = root;
+    while (current_node.state != leaf) {
+      if (current_node.son_num == 0) {
+        return T();
+      }
+      int place = LowerBound(another, current_node.index, 1, current_node.son_num - 1);
+      ReadNode(current_node, current_node.son_pos[place]);
+      WriteNode(current_node);
+    }
+    if (current_node.son_num == 0) {
+      return T();
+    }
+    int search = LowerBound(another, current_node.index, 1, current_node.son_num - 1);
+    ReadLeaf(current_leaf, current_node.son_pos[search]);
+    int pos = BinarySearch(another, current_leaf.storage, 1, current_leaf.data_num);
+    if (current_leaf.storage[pos].key == key && current_leaf.storage[pos].value == another.value) {
+      return current_leaf.storage[pos].value;
+    } else {
+      return T();
+    }
   }
 
   void insert(const Key &key, const T &val) {
