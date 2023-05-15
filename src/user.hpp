@@ -86,7 +86,6 @@ class UserSystem {
                 int privilege) {
     int real_privilege = privilege;
     my_string<20> cur_name(cur), todo(username);
-    bool super_admin = false;
     if (UserMap.empty()) {
       real_privilege = 10;
     } else {
@@ -98,6 +97,9 @@ class UserSystem {
     }
     User to_add(username, password, name, mailAddr, real_privilege);
     UserMap.insert(username, to_add);
+    if (UserMap.capacity() == 2) {
+      return false;
+    }
     return true;
   }
 
@@ -136,12 +138,12 @@ class UserSystem {
 
   std::string query_profile(const std::string &cur, const std::string &username) {
     my_string<20> cur_name(cur), todo(username);
-    if (LoginState.find(cur_name) == LoginState.end()) {
-      throw sjtu::exception();
+    if (LoginState.count(cur_name) == 0) {
+      return "-1";
     }
     User target = UserMap.find(todo);
-    if (target.GetPrivilege() == -1 || LoginState[cur_name] <= target.GetPrivilege() && cur != username) {
-      throw sjtu::exception();
+    if (target.GetPrivilege() == -1 || (LoginState[cur_name] <= target.GetPrivilege() && cur != username)) {
+      return "-1";
     }
     std::string ans =
         username + ' ' + target.GetName() + ' ' + target.GetMailAddr() + ' ' + std::to_string(target.GetPrivilege());
@@ -156,16 +158,13 @@ class UserSystem {
                              int new_privilege) {
     my_string<20> cur_name(cur), todo(username);
     if (LoginState.find(cur_name) == LoginState.end()) {
-      throw sjtu::exception();
+      return "-1";
     }
     User target = UserMap.find(todo), original = target;
     if (target.GetPrivilege() == -1 || LoginState[cur_name] <= target.GetPrivilege() && cur != username) {
-      throw sjtu::exception();
+      return "-1";
     }
     if (new_privilege != -1) {
-      if (new_privilege >= LoginState[cur_name]) {
-        throw sjtu::exception();
-      }
       target.ChangePrivilege(new_privilege);
       if (LoginState.find(todo) != LoginState.end()) {
         LoginState[todo] = new_privilege;

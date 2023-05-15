@@ -15,16 +15,14 @@ class Program {
                            "StationTree", "StationData", "OrderTree", "OrderData",
                            "PendingTree", "PendingDate") {}
 
-  void GetNew(const std::string &info) {
-    my_scanner.set(info, ' ');
+  void GetNew(const std::string &_info) {
+    my_scanner.set(_info, ' ');
   }
-
   std::string parse() {
     std::string op, output;
     int time_stamp;
     my_scanner.GetChar(), time_stamp = my_scanner.NextInteger(), my_scanner.GetChar();
-    output = '[' + std::to_string(time_stamp) + ']';
-
+    output = '[' + std::to_string(time_stamp) + "] ";
     op = my_scanner.NextToken();
     if (op == "login") {
       std::string op1, username, password;
@@ -53,7 +51,6 @@ class Program {
         output += "-1";
       }
     } else if (op == "query_profile") {
-      my_scanner.NextToken();
       std::string op1, cur, username;
       op1 = my_scanner.NextToken();
       if (op1 == "-c") {

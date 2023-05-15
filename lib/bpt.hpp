@@ -174,8 +174,10 @@ class BPlusTree {
     ReadLeaf(current_leaf, current_node.son_pos[search]);
     int pos = BinarySearch(another, current_leaf.storage, 1, current_leaf.data_num);
     if (current_leaf.storage[pos].key == key) {
+      WriteLeaves(current_leaf);
       return current_leaf.storage[pos].value;
     } else {
+      WriteLeaves(current_leaf);
       return T();
     }
   }

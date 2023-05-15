@@ -20,15 +20,16 @@ class TokenScanner {
   }
 
   std::string NextToken() {
-    std::string ret;
+    int l, r;
     while (info[pos] == delim && pos < length) {
       ++pos;
     }
+    l = pos;
     while (info[pos] != delim && pos < length) {
-      ret += info[pos];
       ++pos;
     }
-    return info;
+    r = pos - 1;
+    return info.substr(l, r - l + 1);
   }
 
   int NextInteger() {
@@ -36,14 +37,15 @@ class TokenScanner {
     while (info[pos] == delim) {
       ++pos;
     }
-    while (info[pos] != delim && pos < length) {
-      ret = ret * 10 + info[pos] - '0';
+    while (info[pos] <= '9' && info[pos] >= '0' && pos < length) {
+      ret = ret * 10 + (info[pos] - '0');
       ++pos;
     }
     return ret;
   }
 
   bool HasMoreToken() {
+    if (pos == length) return false;
     while (info[pos] == delim) {
       ++pos;
       if (pos == length) return false;
