@@ -81,7 +81,7 @@ class Date {
   inline friend Date operator-(Date, const int &);
   inline friend std::ostream &operator<<(std::ostream &, const Date &);
   inline friend bool operator<(const Date &, const Date &);
-  friend bool operator!=(const Date & cmp_1, const Date &cmp_2) {
+  friend bool operator!=(const Date &cmp_1, const Date &cmp_2) {
     return cmp_1.current != cmp_2.current;
   }
   Date &operator++() {
@@ -266,14 +266,23 @@ int operator-(const Date &minus_1, const Date &minus_2) {
 class Time {
  public:
   friend class train_system;
-   int now;
-   Date day;
+  int now;
+  Date day;
  public:
   Time(Date _day = Date(), int _hour = 0, int _minute = 0) : day(_day), now(_hour * 60 + _minute) {}
   Time &operator+=(const int &adder) {
     now += adder;
     day += now / 1440, now %= 1440;
     return *this;
+  }
+  friend int mod_minus(const Time &op1, const Time &op2) {
+    return (op1.now - op2.now) % 1440;
+  }
+  /*
+   * the so-called "operator-" returns in the form of integer
+   */
+  friend int operator-(const Time &op1, const Time &op2) {
+    return 1440 * (op1.day - op2.day) + op1.now - op2.now;
   }
   void change(int _hour, int _minute) {
     now = _hour * 60 + _minute;
@@ -307,8 +316,12 @@ class Time {
     ret += std::to_string(now % 60);
     return ret;
   }
+
   friend bool operator<=(const Time &cmp_1, const Time &cmp_2) {
     return cmp_1.day < cmp_2.day || cmp_1.day == cmp_2.day && cmp_1.now <= cmp_2.now;
+  }
+  friend bool operator<(const Time &cmp_1, const Time &cmp_2) {
+    return cmp_1.day < cmp_2.day || cmp_1.day == cmp_2.day && cmp_1.now < cmp_2.now;
   }
   friend bool leq_day(const Time &cmp_1, const Date &cmp_2) {
     return cmp_1.day < cmp_2 || cmp_1.day == cmp_2;
@@ -318,7 +331,7 @@ class Time {
   }
 };
 
-template <class iterator, class Compare = std::less<typename iterator::value_type>>
+template<class iterator, class Compare = std::less<typename iterator::value_type>>
 void sort(iterator left, iterator right, Compare cmp = Compare{}) {
   if (left - right >= -1) return;
   typename iterator::value_type index(*left);

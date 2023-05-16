@@ -131,7 +131,9 @@ struct station_train {
 struct ticket_info {
   my_string<20> train_id;
   Time depart, arrive;
-  int price, seat, duration;
+  int price{}, seat{}, duration{};
+
+  ticket_info() = default;
 
   ticket_info(const my_string<20> &_train_id, Time _depart, Time _arrive,
               int _price, int _seat, int _duration) : train_id(_train_id), depart(std::move(_depart)),
@@ -244,8 +246,8 @@ class TrainSystem {
                                                                        OrderInfo(name_7, name_8),
                                                                        PendingInfo(name_9, name_10) {}
   bool add_train(const std::string &id, int station_num, int seat_num, my_string<40> station[],
-                 int *price, int start_time, int *travel_times,
-                 int *stopover_times, Date begin_date, Date end_date, char _type) {
+                 const int *price, int start_time, const int *travel_times,
+                 const int *stopover_times, Date begin_date, Date end_date, char _type) {
     Train to_add;
     to_add.trainID = id, to_add.stationNum = station_num, to_add.seatNum = seat_num, to_add.startTime = start_time,
     to_add.type = _type;
@@ -370,7 +372,118 @@ class TrainSystem {
   }
 
   std::string query_transfer(const std::string &start, const std::string &end, const Date &date, bool order) {
-
+    bool found = false;
+    std::string ret;
+    sjtu::vector<station_train> s_list = StationPass.find(my_string<40>(start));
+    sjtu::vector<station_train> t_list = StationPass.find(my_string<40>(end));
+    sjtu::map<my_string<20>, Train> end_list; // reduce redundant I/O
+    sjtu::map<id_date, train_seat> end_trains;
+    int best_time = 2147483647, best_cost = 2147483647;
+    std::string mid_transport;
+    if (s_list.empty() || t_list.empty()) return "0";
+    ticket_info s_ticket, t_ticket;
+    for (auto s_iter : s_list) {
+      Train train_s(TrainMap.find(s_iter.train_id)), train_t;
+      Time left(train_s.start_sale, train_s.startTime / 60, train_s.startTime % 60);
+      Time right(train_s.end_sale, train_s.startTime / 60, train_s.startTime % 60);
+      left += s_iter.leave, right += s_iter.leave;
+      if (!leq_day(left, date) && geq_day(right, date)) continue;
+      Date s_start = train_s.start_sale + (date - left.day);
+      train_seat s_seat = SeatMap.find(id_date(s_iter.train_id, train_s.start_sale + (date - left.day))), t_seat;
+      sjtu::map<std::string, int> station_list;
+      for (int i = s_iter.rank + 1; i < train_s.stationNum; ++i) {
+        station_list[std::string(train_s.stations[i])] = i;
+      }
+      for (auto t_iter : t_list) {
+        if (s_iter.train_id == t_iter.train_id) continue;
+        // must have one transfer
+        if (end_list.find(t_iter.train_id) == end_list.end()) { // read from disk
+          train_t = TrainMap.find(t_iter.train_id);
+          end_list[t_iter.train_id] = train_t;
+        } else {
+          train_t = end_list[t_iter.train_id];
+        }
+        for (int i = 1; i < t_iter.rank; ++i) { // enumerate the transfer stations
+          std::string mid = std::string(train_t.stations[i]);
+          if (station_list.find(mid) == station_list.end()) continue;
+          // check whether train_t leaves after train_s arrives
+          // by calculating the earliest time when train_t leaves
+          Time s_arrive(date, left.now / 60, left.now % 60);
+          s_arrive += train_s.arrive_time[station_list[mid]];
+          Time t_right(train_t.start_sale, train_t.startTime / 60, train_t.startTime % 60);
+          Time t_left(train_t.start_sale, train_t.startTime / 60, train_t.startTime % 60);
+          t_right += train_t.leave_time[i], t_left += train_t.leave_time[i];
+          if (t_right < s_arrive) continue;
+          Time optimal(s_arrive);
+          optimal += mod_minus(t_left, s_arrive);
+          optimal = optimal < t_left ? t_left : optimal;
+          Date t_start = train_t.start_sale + (optimal.day - t_left.day);
+          int least_time = optimal - s_arrive;
+          int now_cost = train_s.prices_sum[station_list[mid]] - s_iter.prices_sum
+              + t_iter.prices_sum - train_t.prices_sum[i];
+          bool better = false;
+          id_date todo(t_iter.train_id, t_start);
+          if (end_trains.find(todo) != end_trains.end()) {
+            t_seat = end_trains[todo];
+          } else {
+            t_seat = SeatMap.find(todo);
+            end_trains[todo] = t_seat;
+          }
+          // begin comparing
+          found = true;
+          if (order) {
+            if (best_time == least_time) {
+              if (best_cost == now_cost) {
+                if (s_ticket.train_id == s_iter.train_id) {
+                  better = t_iter.train_id < t_ticket.train_id;
+                } else {
+                  better = s_iter.train_id < s_ticket.train_id;
+                }
+              } else {
+                better = now_cost < best_cost;
+              }
+            } else {
+              better = least_time < best_time;
+            }
+          } else {
+            if (best_cost == now_cost) {
+              if (best_time == least_time) {
+                if (s_ticket.train_id == s_iter.train_id) {
+                  better = t_iter.train_id < t_ticket.train_id;
+                } else {
+                  better = s_iter.train_id < s_ticket.train_id;
+                }
+              } else {
+                better = least_time < best_time;
+              }
+            } else {
+              better = now_cost < best_cost;
+            }
+          }
+          if (better) {
+            best_time = least_time, best_cost = now_cost;
+            mid_transport = mid;
+            s_ticket = ticket_info(s_iter.train_id,
+                                   Time(s_start, train_s.startTime / 60, train_s.startTime % 60),
+                                   Time(date, left.now / 60, left.now % 60),
+                                   train_s.prices_sum[station_list[mid]] - s_iter.prices_sum,
+                                   available(s_seat, s_iter.rank, station_list[mid] - 1),
+                                   0);
+            t_ticket = ticket_info(t_iter.train_id, t_start, optimal, t_iter.prices_sum - train_t.prices_sum[i],
+                                   available(t_seat, i, t_iter.rank - 1), 0);
+          }
+        }
+      }
+    }
+    if (found) {
+      ret = std::string(s_ticket.train_id) + ' ' + start + ' ' + std::string(s_ticket.depart) + " -> " + mid_transport + ' '
+          + std::string(s_ticket.arrive) + ' ' + std::to_string(s_ticket.price) + ' ' + std::to_string((s_ticket.seat));
+      ret += '\n' + std::string(t_ticket.train_id) + ' ' + mid_transport + ' ' + std::string(t_ticket.depart) + " -> " + end + ' '
+          + std::string(t_ticket.arrive) + ' ' + std::to_string(t_ticket.price) + ' ' + std::to_string((t_ticket.seat));
+    } else {
+      ret = "0";
+    }
+    return ret;
   }
 
   std::string buy_ticket(const std::string &username, const std::string &trainID, const Date &date,
