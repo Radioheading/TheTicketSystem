@@ -73,7 +73,7 @@ class User {
 
 class UserSystem {
  private:
-  BPlusTree<my_string<20>, User> UserMap;
+  BPlusTree<my_string<20>, User, 150, 202> UserMap;
   sjtu::map<my_string<20>, int> LoginState;
  public:
   // 1 for successful operation and 0 for unsuccessful
@@ -97,9 +97,6 @@ class UserSystem {
     }
     User to_add(username, password, name, mailAddr, real_privilege);
     UserMap.insert(username, to_add);
-    if (UserMap.capacity() == 2) {
-      return false;
-    }
     return true;
   }
 

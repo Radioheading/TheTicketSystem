@@ -14,8 +14,10 @@
  * these are several means to locate specific element
  * including upper_bound, lower_bound, lower_search and binary_search
  */
-template<class Key, class T>
+template<class Key, class T, int size_max, int son_max>
 class MultiBPlusTree {
+  static const int max_size = size_max, min_size = size_max >> 1;
+  static const int max_son = son_max, min_son = son_max >> 1;
   enum NodeState { leaf, middle };
  private:
   bin tree_bin, data_bin;
@@ -420,7 +422,7 @@ class MultiBPlusTree {
             todo.index[i] = todo.index[i + 1];
           }
           --todo.son_num;
-          if (todo.son_num < min_size) {
+          if (todo.son_num < min_son) {
             return false;
           } else {
             WriteNode(todo);
@@ -445,7 +447,7 @@ class MultiBPlusTree {
             todo.index[i] = todo.index[i + 1];
           }
           --todo.son_num;
-          if (todo.son_num < min_size) {
+          if (todo.son_num < min_son) {
             return false;
           } else {
             WriteNode(todo);
@@ -472,7 +474,7 @@ class MultiBPlusTree {
         // node adjusting
         if (pos < todo.son_num) { // borrowing behind
           ReadNode(after, todo.son_pos[pos + 1]);
-          if (after.son_num > min_size) { // can borrow
+          if (after.son_num > min_son) { // can borrow
             todo_node.son_pos[todo_node.son_num + 1] = after.son_pos[1];
             todo_node.index[todo_node.son_num] = todo.index[pos], todo.index[pos] = after.index[1];
             ++todo_node.son_num;
@@ -489,7 +491,7 @@ class MultiBPlusTree {
         }
         if (pos > 1) { // borrowing front
           ReadNode(before, todo.son_pos[pos - 1]);
-          if (before.son_num > min_size) { // can borrow
+          if (before.son_num > min_son) { // can borrow
             if (after.address) {
               WriteNode(after);
             }
@@ -529,7 +531,7 @@ class MultiBPlusTree {
             todo.index[i] = todo.index[i + 1];
           }
           --todo.son_num;
-          if (todo.son_num < min_size) {
+          if (todo.son_num < min_son) {
             return false;
           } else {
             WriteNode(todo);
@@ -557,7 +559,7 @@ class MultiBPlusTree {
             todo.index[i] = todo.index[i + 1];
           }
           --todo.son_num;
-          if (todo.son_num < min_size) {
+          if (todo.son_num < min_son) {
             return false;
           } else {
             WriteNode(todo);

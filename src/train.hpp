@@ -17,8 +17,8 @@ struct Train {
   my_string<20> trainID{};
   int stationNum = 0, seatNum = 0, startTime = 0;
   my_string<40> stations[max_info]{};
-  int prices_sum[max_info - 1]{};
-  int leave_time[max_info - 1]{}, arrive_time[max_info]{0};
+  int prices_sum[max_info]{};
+  int leave_time[max_info]{}, arrive_time[max_info]{0};
   Date start_sale{}, end_sale{};
   char type{};
 
@@ -30,24 +30,34 @@ struct Train {
     return cmp_1.trainID == cmp_2.trainID;
   }
 
+  Train() = default;
+
+  Train(const Train &other) {
+    release_state = other.release_state, trainID = other.trainID;
+    stationNum = other.stationNum, seatNum = other.seatNum, startTime = other.startTime;
+    start_sale = other.start_sale, end_sale = other.end_sale, type = other.type;
+    for (int i = 1; i <= stationNum; ++i) {
+      stations[i] = other.stations[i], prices_sum[i] = other.prices_sum[i];
+      leave_time[i] = other.leave_time[i], arrive_time[i] = other.arrive_time[i];
+    }
+  }
+
   Train &operator=(const Train &other) {
     if (&other == this) return *this;
-    release_state = other.release_state, stationNum = other.stationNum, seatNum = other.seatNum, startTime =
-        other.startTime;
+    release_state = other.release_state;
+    stationNum = other.stationNum, seatNum = other.seatNum, startTime = other.startTime;
     trainID = other.trainID, type = other.type;
     start_sale = other.start_sale, end_sale = other.end_sale;
     for (int i = 1; i <= stationNum; ++i) {
-      stations[i] = other.stations[i];
-    }
-    for (int i = 1; i < stationNum; ++i) {
-      prices_sum[i] = other.prices_sum[i], leave_time[i] = other.leave_time[i], arrive_time[i] = other.arrive_time[i];
+      stations[i] = other.stations[i], prices_sum[i] = other.prices_sum[i];
+      leave_time[i] = other.leave_time[i], arrive_time[i] = other.arrive_time[i];
     }
     return *this;
   }
 };
 
 struct train_seat {
-  int seat[max_info], station_num = 0, seat_num = 0;
+  int seat[max_info]{}, station_num = 0, seat_num = 0;
   Date start_date; // we store the day when the train departs
 
   train_seat(int _station_num, int _seat_num, const Date &_start_date)
@@ -160,15 +170,23 @@ struct order {
   Time departure, arrival;
   Date first_leave;
 
-  order(int _time = 0) : time_stamp(_time) {};
+  explicit order(int _time = 0) : time_stamp(_time) {};
 
   order(TicketState _state, int _price, int _num, int _time_stamp, int _rank_s, int _rank_e,
         const std::string &_username, const std::string &_train_id, const std::string &_from, const std::string &_to,
-        Time _departure, Time _arrival, Date _first_leave) : state(_state), price(_price),
-                                          num(_num), time_stamp(_time_stamp),
-                                          username(_username), train_id(_train_id),
-                                          from(_from), to(_to), rank_s(_rank_s), rank_e(_rank_e),
-                                          departure(std::move(_departure)), arrival(std::move(_arrival)), first_leave(_first_leave) {}
+        Time _departure, Time _arrival, Date _first_leave) : state(_state),
+                                                             price(_price),
+                                                             num(_num),
+                                                             time_stamp(_time_stamp),
+                                                             username(_username),
+                                                             train_id(_train_id),
+                                                             from(_from),
+                                                             to(_to),
+                                                             rank_s(_rank_s),
+                                                             rank_e(_rank_e),
+                                                             departure(std::move(_departure)),
+                                                             arrival(std::move(_arrival)),
+                                                             first_leave(_first_leave) {}
   friend bool operator<(const order &cmp_1, const order &cmp_2) {
     return cmp_1.time_stamp > cmp_2.time_stamp;
   }
@@ -177,13 +195,14 @@ struct order {
     return cmp_1.time_stamp == cmp_2.time_stamp;
   }
 
-  explicit operator std::string() {
+  explicit operator std::string() const {
     std::string out = "[";
     if (state == Success) out += "success] ";
     if (state == Pending) out += "pending] ";
     if (state == Refunded) out += "refunded] ";
-    out += (std::string)train_id + ' ' + (std::string) from + ' ' + (std::string) departure;
-    out += " -> " + (std::string)arrival + ' ' + std::to_string(price) + ' ' + std::to_string(num);
+    out += (std::string) train_id + ' ' + (std::string) from + ' ' + (std::string) departure;
+    out += " -> " + (std::string) arrival + ' ' + std::to_string(price) + ' ' + std::to_string(num);
+    return out;
   }
 };
 
@@ -191,7 +210,7 @@ struct pending {
   int num{}, time_stamp{}, start_rank{}, end_rank{};
   my_string<20> username, train_id;
 
-  pending(int _time_stamp = 0) : time_stamp(_time_stamp) {};
+  explicit pending(int _time_stamp = 0) : time_stamp(_time_stamp) {};
   pending(int _num, int _time_stamp, int _start_rank,
           int _end_rank, const std::string &_username,
           const std::string &_train_id) : num(_num), time_stamp(_time_stamp),
@@ -209,12 +228,11 @@ struct pending {
 
 class TrainSystem {
  private:
-  BPlusTree<my_string<20>, Train> TrainMap;
-  BPlusTree<id_date, train_seat> SeatMap;
-  MultiBPlusTree<my_string<40>, station_train> StationPass;
-  MultiBPlusTree<my_string<20>, order> OrderInfo;
-  MultiBPlusTree<id_date, pending> PendingInfo;
- public:
+  BPlusTree<my_string<20>, Train, 50, 100> TrainMap;
+  BPlusTree<id_date, train_seat, 200, 150> SeatMap;
+  MultiBPlusTree<my_string<40>, station_train, 100, 200> StationPass;
+  MultiBPlusTree<my_string<20>, order, 100, 200> OrderInfo;
+  MultiBPlusTree<id_date, pending, 100, 150> PendingInfo;
  public:
   TrainSystem(const std::string &name_1, const std::string &name_2,
               const std::string &name_3, const std::string &name_4,
@@ -225,9 +243,9 @@ class TrainSystem {
                                                                        StationPass(name_5, name_6),
                                                                        OrderInfo(name_7, name_8),
                                                                        PendingInfo(name_9, name_10) {}
-  bool add_train(const std::string &id, int station_num, int seat_num, std::string *station,
-                 const int *price, int start_time, const int *travel_times,
-                 const int *stopover_times, Date begin_date, Date end_date, char _type) {
+  bool add_train(const std::string &id, int station_num, int seat_num, my_string<40> station[],
+                 int *price, int start_time, int *travel_times,
+                 int *stopover_times, Date begin_date, Date end_date, char _type) {
     Train to_add;
     to_add.trainID = id, to_add.stationNum = station_num, to_add.seatNum = seat_num, to_add.startTime = start_time,
     to_add.type = _type;
@@ -240,11 +258,13 @@ class TrainSystem {
       to_add.arrive_time[i] = to_add.leave_time[i - 1] + travel_times[i - 1];
       if (i != station_num) {
         to_add.leave_time[i] = to_add.arrive_time[i] + stopover_times[i - 1];
+      } else {
+        to_add.leave_time[i] = 0;
       }
     }
-    to_add.prices_sum[0] = 0;
-    for (int i = 1; i < station_num; ++i) {
-      to_add.prices_sum[i] = to_add.prices_sum[i - 1] + price[i];
+    to_add.prices_sum[1] = 0;
+    for (int i = 2; i <= station_num; ++i) {
+      to_add.prices_sum[i] = to_add.prices_sum[i - 1] + price[i - 1];
     }
     TrainMap.insert(to_add.trainID, to_add);
     return true;
@@ -424,7 +444,8 @@ class TrainSystem {
           OrderInfo.erase(iter.train_id, target), SeatMap.erase(id_date(iter.train_id, target.first_leave), seat_info);
           target.state = Success;
           satisfy_order(seat_info, iter.start_rank, iter.end_rank - 1, iter.num);
-          OrderInfo.insert(iter.train_id, target), SeatMap.insert(id_date(iter.train_id, target.first_leave), seat_info);
+          OrderInfo.insert(iter.train_id, target), SeatMap.insert(id_date(iter.train_id, target.first_leave),
+                                                                  seat_info);
           PendingInfo.erase(id_date(iter.train_id, target.first_leave), pending(iter.time_stamp));
         }
       }

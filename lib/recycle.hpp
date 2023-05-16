@@ -3,11 +3,11 @@
 #include <string>
 #include <fstream>
 
-const int max_bin = 1e4 + 5;
+const int max_bin = 5;
 
 struct before {
   int size = 0;
-  int address[max_bin];
+  int address[max_bin]{};
 };
 class bin {
  private:
@@ -44,6 +44,10 @@ class bin {
   void push_back(const int &todo) {
     if (store.size == max_bin - 1) return;
     store.address[store.size++] = todo;
+  }
+
+  void clear() {
+    store.size = 0;
   }
 };
 #endif //BPT__RECYCLE_HPP_

@@ -54,6 +54,9 @@ class TokenScanner {
   }
 
   char GetChar() {
+    while (info[pos] == delim && pos < length) {
+      ++pos;
+    }
     return info[pos++];
   }
 };

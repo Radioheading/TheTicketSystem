@@ -1,1 +1,1 @@
-/usr/bin/c++  -g   CMakeFiles/TheTicketSystem.dir/main.cpp.o  -o TheTicketSystem 
+/usr/bin/c++  -std=c++17 -g   CMakeFiles/TheTicketSystem.dir/main.cpp.o  -o TheTicketSystem 

@@ -94,14 +94,15 @@ class Program {
         output += "-1";
       }
     } else if (op == "add_train") {
-      std::string op1, train_id, stations[101];
+      std::string op1, train_id;
+      my_string<40> stations[101];
       int station_num, seat_num, prices[100], travel_time[100], stop_time[100];
       int start_h, start_m;
       char type;
       Date start_sale, end_sale;
       TokenScanner divide;
       while (my_scanner.HasMoreToken()) {
-        op1 == my_scanner.NextToken();
+        op1 = my_scanner.NextToken();
         if (op1 == "-i") train_id = my_scanner.NextToken();
         if (op1 == "-n") station_num = my_scanner.NextInteger();
         if (op1 == "-m") seat_num = my_scanner.NextInteger();
@@ -134,34 +135,28 @@ class Program {
           divide.set(my_scanner.NextToken(), '|');
           int i = 1;
           std::string temp = divide.NextToken();
-          if (temp == "-") {
+          if (temp == "_") {
             continue;
           } else {
             stop_time[i++] = std::stoi(temp);
           }
           while (divide.HasMoreToken()) {
-            travel_time[i++] = divide.NextInteger();
+            stop_time[i++] = divide.NextInteger();
           }
         }
         if (op1 == "-d") {
           divide.set(my_scanner.NextToken(), '|');
           TokenScanner start(divide.NextToken(), '-'), end(divide.NextToken(), '-');
-          start_sale.change(2023, start.NextInteger(), start.NextInteger());
-          end_sale.change(2023, end.NextInteger(), end.NextInteger());
+          int t1 = start.NextInteger(), t2 = start.NextInteger();
+          int t3 = end.NextInteger(), t4 = end.NextInteger();
+          start_sale.change(2023, t1, t2);
+          end_sale.change(2023, t3, t4);
         }
         if (op1 == "-y") type = my_scanner.GetChar();
       }
-      if (train_system.add_train(train_id,
-                                 station_num,
-                                 seat_num,
-                                 stations,
-                                 prices,
-                                 start_h * 60 + start_m,
-                                 travel_time,
-                                 stop_time,
-                                 start_sale,
-                                 end_sale,
-                                 type)) {
+      if (train_system.add_train(train_id, station_num, seat_num, stations, prices,
+                                 start_h * 60 + start_m, travel_time, stop_time,
+                                 start_sale, end_sale, type)) {
         output += "0";
       } else {
         output += "-1";
@@ -284,7 +279,7 @@ class Program {
       user_system.clean();
       train_system.clean();
     } else if (op == "exit") {
-      output += "bye";
+      throw sjtu::exception();
     }
     return output;
   }

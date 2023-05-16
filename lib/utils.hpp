@@ -65,6 +65,13 @@ class Date {
   }
   void change(int _year, int _month, int _day) {
     year = _year, month = _month, day = _day;
+    current = 0;
+    for (int i = 1; i < year; ++i) {
+      if (i % 4 == 0 && i % 100 != 0 || i % 400 == 0) current += 366;
+      else current += 365;
+    }
+    if ((year % 4 == 0 && year % 100 != 0 || year % 400 == 0)) current += run_sum[month - 1] + day;
+    else current += sum[month - 1] + day;
   }
   Date(int, int, int);
   inline friend int operator-(const Date &, const Date &);
