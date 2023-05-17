@@ -173,7 +173,7 @@ class BPlusTree {
     current_node = root;
     while (current_node.state != leaf) {
       if (current_node.son_num == 0) {
-        std::cout << "no son!\n";
+        // std::cout << "no son!\n";
         return T();
       }
       int place = LowerSearch(another, current_node.index, 1, current_node.son_num - 1);
@@ -181,7 +181,6 @@ class BPlusTree {
       WriteNode(current_node);
     }
     if (current_node.son_num == 0) {
-      std::cout << "no data!\n";
       return T();
     }
     int search = LowerSearch(another, current_node.index, 1, current_node.son_num - 1);

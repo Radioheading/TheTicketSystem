@@ -11,8 +11,8 @@ using namespace std;
 string operation;
 
 int main() {
-//  freopen("5.in", "r", stdin);
-//  freopen("my_5.out", "w", stdout);
+  freopen("1.in", "r", stdin);
+  freopen("my_1.out", "w", stdout);
   ios::sync_with_stdio(false);
   cin.tie(nullptr), cout.tie(nullptr);
   Program TicketSystem;
