@@ -250,9 +250,10 @@ class TrainSystem {
                                                                        StationPass(name_5, name_6),
                                                                        OrderInfo(name_7, name_8),
                                                                        PendingInfo(name_9, name_10) {}
-  bool add_train(const std::string &id, int station_num, int seat_num, my_string<40> station[],
+  bool add_train(const std::string &id, int station_num, int seat_num, my_string<40> *station,
                  const int *price, int start_time, const int *travel_times,
                  const int *stopover_times, Date begin_date, Date end_date, char _type) {
+    if (TrainMap.find(id).stationNum > 0) return false;
     Train to_add;
     to_add.trainID = id, to_add.stationNum = station_num, to_add.seatNum = seat_num, to_add.startTime = start_time,
     to_add.type = _type;
@@ -338,15 +339,14 @@ class TrainSystem {
   }
 
   std::string query_ticket(const std::string &start, const std::string &end, const Date &date, bool order) {
-    my_string<40> depart(start), arrive(end);
-    sjtu::vector<station_train> depart_list = StationPass.find(depart), arrive_list = StationPass.find(arrive);
+    sjtu::vector<station_train> depart_list = StationPass.find(start), arrive_list = StationPass.find(end);
     sjtu::vector<ticket_info> tickets;
     for (auto iter_1 = depart_list.begin(), iter_2 = arrive_list.begin(); iter_1 != depart_list.end(); ++iter_1) {
       for (; iter_2 != arrive_list.end() && (*iter_2).train_id < (*iter_1).train_id; ++iter_2);
       if (iter_2 == arrive_list.end()) {
         break;
       }
-      if ((*iter_1).train_id == (*iter_2).train_id && (*iter_1).leave < (*iter_2).arrive) { // right version
+      if ((*iter_1).train_id == (*iter_2).train_id && (*iter_1).rank < (*iter_2).rank) { // right version
         Train ret = TrainMap.find((*iter_1).train_id);
         // judging the validity of date
         Time start_left(ret.start_sale, ret.startTime / 60, ret.startTime % 60),
@@ -557,7 +557,6 @@ class TrainSystem {
     target.state = Refunded;
     OrderInfo.insert(username, target);
     id_date todo(target.train_id, target.first_leave);
-    // std::cout << "refunding: " << target.first_leave << std::endl;
     if (origin == Pending) { // delete it from PendingInfo
       PendingInfo.erase(todo, pending(target.time_stamp));
     } else { // return tickets and get successor
@@ -572,8 +571,7 @@ class TrainSystem {
           target.state = Success;
           satisfy_order(seat_info, iter.start_rank, iter.end_rank - 1, iter.num);
           OrderInfo.insert(iter.train_id, target);
-          // std::cout << "buying back: " << target.first_leave << std::endl;
-          PendingInfo.erase(id_date(iter.train_id, target.first_leave), pending(iter.time_stamp));
+          PendingInfo.erase(todo, pending(iter.time_stamp));
         }
       }
       SeatMap.insert(todo, seat_info);

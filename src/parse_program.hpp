@@ -257,12 +257,16 @@ class Program {
       }
       if (user_system.check_user(username)) {
         output += train_system.buy_ticket(username, train_id, date, from, to, wait, num, time_stamp);
+      } else {
+        output += "-1";
       }
     } else if (op == "query_order") {
       std::string username;
       my_scanner.NextToken(), username = my_scanner.NextToken();
       if (user_system.check_user(username)) {
         output += train_system.query_order(username);
+      } else {
+        output += "-1";
       }
     } else if (op == "refund_ticket") {
       std::string op1, username;
@@ -278,6 +282,8 @@ class Program {
         } else {
           output += "-1";
         }
+      } else {
+        output += "-1";
       }
     } else if (op == "clean") {
       user_system.clean();
