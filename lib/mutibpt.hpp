@@ -8,7 +8,21 @@
 #include "recycle.hpp"
 #include "vector.hpp"
 
-
+template<class T>
+int SingleBinarySearch(T val, T *array, int l, int r) {
+  int ans = r + 1;
+  while (l <= r) {
+    int mid = (l + r) >> 1;
+    if (val.key < array[mid].key || val.key == array[mid].key && val.value < array[mid].value) {
+      r = mid - 1;
+    } else if (array[mid].key < val.key || array[mid].key == val.key && array[mid].value < val.value) {
+      l = mid + 1;
+    } else {
+      return mid;
+    }
+  }
+  return ans;
+}
 /*
  * @supplementary functions
  * these are several means to locate specific element
@@ -41,7 +55,8 @@ class MultiBPlusTree {
       return *this;
     }
     element() : key(Key()), value(T()) {}
-    element(const Key &index, const T &number) : key(index), value(number) {}
+    template <class R>
+    element(const Key &index, const R &number) : key(index), value(number) {}
   };
   struct node {
     int address = 0;
@@ -146,7 +161,7 @@ class MultiBPlusTree {
 
   template<class Key_1>
   T find_unique(const Key &key, const Key_1 &key_1) {
-    element another(key, T(key_1));
+    element another(key, key_1);
     current_node = root;
     while (current_node.state != leaf) {
       if (current_node.son_num == 0) {
@@ -161,7 +176,7 @@ class MultiBPlusTree {
     }
     int search = LowerBound(another, current_node.index, 1, current_node.son_num - 1);
     ReadLeaf(current_leaf, current_node.son_pos[search]);
-    int pos = BinarySearch(another, current_leaf.storage, 1, current_leaf.data_num);
+    int pos = SingleBinarySearch(another, current_leaf.storage, 1, current_leaf.data_num);
     if (current_leaf.storage[pos].key == key && current_leaf.storage[pos].value == another.value) {
       WriteLeaves(current_leaf);
       return current_leaf.storage[pos].value;
@@ -233,6 +248,7 @@ class MultiBPlusTree {
   }
 
   void clear() {
+    tree_bin.clear(), data_bin.clear();
     leaf_cache.clear(), node_cache.clear();
     init();
   }
@@ -577,8 +593,6 @@ class MultiBPlusTree {
       tree.seekg(place);
       tree.read(reinterpret_cast<char *>(&obj), sizeof(obj));
       // std::cout << "node_cache miss!\n";
-    } else {
-      // std::cout << "node_cache shot!\n";
     }
   }
   void ReadLeaf(leaves &obj, int place) {
@@ -586,9 +600,6 @@ class MultiBPlusTree {
     if (!leaf_cache.GetNode(obj, place)) {
       data.seekg(place);
       data.read(reinterpret_cast<char *>(&obj), sizeof(obj));
-      // std::cout << "leaf_cache miss!\n";
-    } else {
-      // std::cout << "leaf_cache shot!\n";
     }
   }
   void WriteNode(node &obj) {

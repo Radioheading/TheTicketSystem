@@ -28,6 +28,19 @@ int LowerBound(T val, T *array, int l, int r) {
   return ans;
 }
 template<class T>
+int LowerSearch(T val, T *array, int l, int r) {
+  int ans = r + 1;
+  while (l <= r) {
+    int mid = (l + r) >> 1;
+    if (val.key < array[mid].key) {
+      r = mid - 1, ans = mid;
+    } else {
+      l = mid + 1;
+    }
+  }
+  return ans;
+}
+template<class T>
 int UpperBound(T val, T *array, int l, int r) {
   int ans = 0;
   while (l <= r) {
@@ -114,11 +127,14 @@ class BPlusTree {
   friend class CachePool<node>;
   friend class CachePool<leaves>;
   node root;
+  CachePool<node> node_cache;
+  CachePool<leaves> leaf_cache;
   BPlusTree(const std::string &_tree_name, const std::string &_data_name)
       : tree_name(_tree_name),
         data_name(_data_name),
         tree_bin(_tree_name + "'s garbage"),
-        data_bin(_data_name + "'s garbage") {
+        data_bin(_data_name + "'s garbage"),
+        node_cache(tree), leaf_cache(data) {
     init();
   }
   ~BPlusTree() {
@@ -128,7 +144,7 @@ class BPlusTree {
   };
 
   void clear() {
-    // leaf_cache.clear(), node_cache.clear();
+    leaf_cache.clear(), node_cache.clear();
     tree_bin.clear(), data_bin.clear();
     init();
   }
@@ -157,18 +173,20 @@ class BPlusTree {
     current_node = root;
     while (current_node.state != leaf) {
       if (current_node.son_num == 0) {
+        std::cout << "no son!\n";
         return T();
       }
-      int place = LowerBound(another, current_node.index, 1, current_node.son_num - 1);
+      int place = LowerSearch(another, current_node.index, 1, current_node.son_num - 1);
       ReadNode(current_node, current_node.son_pos[place]);
       WriteNode(current_node);
     }
     if (current_node.son_num == 0) {
+      std::cout << "no data!\n";
       return T();
     }
-    int search = LowerBound(another, current_node.index, 1, current_node.son_num - 1);
+    int search = LowerSearch(another, current_node.index, 1, current_node.son_num - 1);
     ReadLeaf(current_leaf, current_node.son_pos[search]);
-    int pos = BinarySearch(another, current_leaf.storage, 1, current_leaf.data_num);
+    int pos = LowerBound(another, current_leaf.storage, 1, current_leaf.data_num);
     if (current_leaf.storage[pos].key == key) {
       WriteLeaves(current_leaf);
       return current_leaf.storage[pos].value;
@@ -587,20 +605,28 @@ class BPlusTree {
     return true;
   }
   void ReadNode(node &obj, int place) {
-    tree.seekg(place);
-    tree.read(reinterpret_cast<char *>(&obj), sizeof(obj));
+    // std::cout << "node place: " << place << '\n';
+    if (!node_cache.GetNode(obj, place)) {
+      tree.seekg(place);
+      tree.read(reinterpret_cast<char *>(&obj), sizeof(obj));
+      // std::cout << "node_cache miss!\n";
+    }
   }
   void ReadLeaf(leaves &obj, int place) {
-    data.seekg(place);
-    data.read(reinterpret_cast<char *>(&obj), sizeof(obj));
+    // std::cout << "leaf place: " << place << '\n';
+    if (!leaf_cache.GetNode(obj, place)) {
+      data.seekg(place);
+      data.read(reinterpret_cast<char *>(&obj), sizeof(obj));
+    }
   }
   void WriteNode(node &obj) {
-    tree.seekp(obj.address);
-    tree.write(reinterpret_cast<char *>(&obj), sizeof(obj));
+    if (obj.address == 8) {// do not write root!
+      return;
+    }
+    node_cache.InsertFront(obj);
   }
   void WriteLeaves(leaves &obj) {
-    data.seekp(obj.address);
-    data.write(reinterpret_cast<char *>(&obj), sizeof(obj));
+    leaf_cache.InsertFront(obj);
   }
   void UpdateData() {
     data.seekp(0);
@@ -611,4 +637,4 @@ class BPlusTree {
     data.write(reinterpret_cast<char *>(&tree_begin), sizeof(tree_begin));
   }
 };
-#endif //BPT__BPT_HPP_
+#endif //BPT_HPP_

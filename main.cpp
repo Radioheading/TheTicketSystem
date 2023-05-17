@@ -1,5 +1,5 @@
 /*
- * @todo   1、想想换乘
+ * @todo   1、调试剩下的点
  *         2、调试第二个点
  */
 
@@ -22,7 +22,6 @@ int main() {
       TicketSystem.GetNew(operation);
       std::cout << TicketSystem.parse() << endl;
     } catch (...) {
-      std::cout << "bye\n";
       return 0;
     }
   }

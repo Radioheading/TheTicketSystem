@@ -57,7 +57,7 @@ struct Train {
 };
 
 struct train_seat {
-  int seat[max_info]{}, station_num = 0, seat_num = 0;
+  int seat[max_info]{}, station_num = 0, seat_num = -1;
   Date start_date; // we store the day when the train departs
 
   train_seat(int _station_num, int _seat_num, const Date &_start_date)
@@ -81,7 +81,7 @@ int available(const train_seat &seat, int l, int r) {
     if (i == l) {
       ans = seat.seat[l];
     } else {
-      ans = std::min(seat.seat[l], ans);
+      ans = std::min(seat.seat[i], ans);
     }
   }
   return ans;
@@ -96,6 +96,11 @@ void satisfy_order(train_seat &seat, int l, int r, int num) {
 struct id_date {
   my_string<20> id;
   Date date; // the day when this train starts
+
+  friend std::ostream &operator<<(std::ostream &out, const id_date &todo) {
+    out << todo.id << ' ' << todo.date;
+    return out;
+  }
 
   id_date() = default;
 
@@ -136,8 +141,8 @@ struct ticket_info {
   ticket_info() = default;
 
   ticket_info(const my_string<20> &_train_id, Time _depart, Time _arrive,
-              int _price, int _seat, int _duration) : train_id(_train_id), depart(std::move(_depart)),
-                                                      arrive(std::move(_arrive)),
+              int _price, int _seat, int _duration) : train_id(_train_id), depart(_depart),
+                                                      arrive(_arrive),
                                                       price(_price),
                                                       seat(_seat),
                                                       duration(_duration) {}
@@ -172,7 +177,7 @@ struct order {
   Time departure, arrival;
   Date first_leave;
 
-  explicit order(int _time = 0) : time_stamp(_time) {};
+  explicit order(int _time = 2147483647) : time_stamp(_time) {};
 
   order(TicketState _state, int _price, int _num, int _time_stamp, int _rank_s, int _rank_e,
         const std::string &_username, const std::string &_train_id, const std::string &_from, const std::string &_to,
@@ -186,8 +191,8 @@ struct order {
                                                              to(_to),
                                                              rank_s(_rank_s),
                                                              rank_e(_rank_e),
-                                                             departure(std::move(_departure)),
-                                                             arrival(std::move(_arrival)),
+                                                             departure(_departure),
+                                                             arrival(_arrival),
                                                              first_leave(_first_leave) {}
   friend bool operator<(const order &cmp_1, const order &cmp_2) {
     return cmp_1.time_stamp > cmp_2.time_stamp;
@@ -203,7 +208,7 @@ struct order {
     if (state == Pending) out += "pending] ";
     if (state == Refunded) out += "refunded] ";
     out += (std::string) train_id + ' ' + (std::string) from + ' ' + (std::string) departure;
-    out += " -> " + (std::string) arrival + ' ' + std::to_string(price) + ' ' + std::to_string(num);
+    out += " -> " + (std::string)to + ' ' +  (std::string) arrival + ' ' + std::to_string(price) + ' ' + std::to_string(num);
     return out;
   }
 };
@@ -273,9 +278,8 @@ class TrainSystem {
   }
 
   bool delete_train(const std::string &train_id) {
-    my_string<20> id = train_id;
     Train res = TrainMap.find(train_id);
-    if (res.stationNum == 0 || !res.release_state) return false;
+    if (res.stationNum == 0 || res.release_state) return false;
     TrainMap.erase(train_id, res);
     return true;
   }
@@ -299,7 +303,7 @@ class TrainSystem {
   std::string query_train(const Date &date, const std::string &train_id) {
     my_string<20> id = train_id;
     Train ret = TrainMap.find(id);
-    if (ret.stationNum == 0) {
+    if (ret.stationNum == 0 || date < ret.start_sale || ret.end_sale < date) {
       return "-1";
     } else {
       std::string ans;
@@ -310,19 +314,23 @@ class TrainSystem {
         if (i == 1) {
           ans += "xx-xx xx:xx";
         } else {
-          ans += (std::string) (Time(date) + ret.arrive_time[i]);
+          ans += (std::string) (Time(date) + ret.startTime + ret.arrive_time[i]);
         }
         ans += " -> ";
         if (i == ret.stationNum) {
           ans += "xx-xx xx:xx";
         } else {
-          ans += (std::string) (Time(date) + ret.leave_time[i]);
+          ans += (std::string) (Time(date) + ret.startTime + ret.leave_time[i]);
         }
         ans += ' ' + std::to_string(ret.prices_sum[i]) + ' ';
-        if (ret.release_state) {
-          ans += std::to_string(the_seat.seat[i]) + '\n';
+        if (i == ret.stationNum) {
+          ans += 'x';
         } else {
-          ans += std::to_string(ret.seatNum) + '\n';
+          if (ret.release_state) {
+            ans += std::to_string(the_seat.seat[i]);
+          } else {
+            ans += std::to_string(ret.seatNum);
+          }
         }
       }
       return ans;
@@ -469,7 +477,7 @@ class TrainSystem {
                                    train_s.prices_sum[station_list[mid]] - s_iter.prices_sum,
                                    available(s_seat, s_iter.rank, station_list[mid] - 1),
                                    0);
-            t_ticket = ticket_info(t_iter.train_id, t_start, optimal, t_iter.prices_sum - train_t.prices_sum[i],
+            t_ticket = ticket_info(t_iter.train_id, optimal, optimal + (train_t.arrive_time[t_iter.rank - 1] - train_t.leave_time[i]), t_iter.prices_sum - train_t.prices_sum[i],
                                    available(t_seat, i, t_iter.rank - 1), 0);
           }
         }
@@ -488,11 +496,10 @@ class TrainSystem {
 
   std::string buy_ticket(const std::string &username, const std::string &trainID, const Date &date,
                          const std::string &from, const std::string &to, bool wait, int num, int time) {
-    my_string<40> from_station(from), to_station(to);
     station_train leave = StationPass.find_unique(from, trainID);
     station_train arrive = StationPass.find_unique(to, trainID);
     Train ret = TrainMap.find(trainID);
-    if (ret.seatNum == 0 || leave.rank == 0 || arrive.rank == 0) {// doesn't exist
+    if (ret.seatNum == 0 || leave.rank == 0 || arrive.rank == 0) {
       return "-1";
     }
     Time start_left(ret.start_sale, ret.startTime / 60, ret.startTime % 60),
@@ -500,13 +507,17 @@ class TrainSystem {
     start_left += leave.leave, start_right += leave.leave;
     if (leq_day(start_left, date) && geq_day(start_right, date) && ret.release_state) { // valid buy
       Date real_start = ret.start_sale + (date - start_left.day); // the real starting date
+      // std::cout << real_start << std::endl;
       train_seat seat_info = SeatMap.find(id_date(trainID, real_start));
+      if (seat_info.seat_num == -1) {
+        seat_info = train_seat(ret.stationNum, ret.seatNum, real_start);
+      }
       if (available(seat_info, leave.rank, arrive.rank - 1) >= num) { // can satisfy need
         SeatMap.erase(id_date(trainID, real_start), seat_info);
         satisfy_order(seat_info, leave.rank, arrive.rank - 1, num);
         SeatMap.insert(id_date(trainID, real_start), seat_info);
         Time start_time(date, start_left.now / 60, start_left.now % 60);
-        OrderInfo.insert(username, order(Success, (arrive.prices_sum - leave.prices_sum) * num,
+        OrderInfo.insert(username, order(Success, arrive.prices_sum - leave.prices_sum,
                                          num, time, leave.rank, arrive.rank, username, trainID, from, to,
                                          start_time, start_time + (arrive.arrive - leave.leave), real_start));
         return std::to_string(num * (arrive.prices_sum - leave.prices_sum));
@@ -514,7 +525,7 @@ class TrainSystem {
         if (wait) {
           Time start_time(date, start_left.now / 60, start_left.now % 60);
           OrderInfo.insert(username,
-                           order(Pending, (arrive.prices_sum - leave.prices_sum) * num,
+                           order(Pending, arrive.prices_sum - leave.prices_sum,
                                  num, time, leave.rank, arrive.rank, username, trainID, from, to, start_time,
                                  start_time + (arrive.arrive - leave.leave), real_start));
           PendingInfo.insert(id_date(trainID, date), pending(num, time, leave.rank, arrive.rank, username, trainID));
@@ -545,23 +556,27 @@ class TrainSystem {
     OrderInfo.erase(username, target);
     target.state = Refunded;
     OrderInfo.insert(username, target);
+    id_date todo(target.train_id, target.first_leave);
+    // std::cout << "refunding: " << target.first_leave << std::endl;
     if (origin == Pending) { // delete it from PendingInfo
-      PendingInfo.erase(id_date(target.train_id, target.first_leave), pending(target.time_stamp));
+      PendingInfo.erase(todo, pending(target.time_stamp));
     } else { // return tickets and get successor
-      train_seat seat_info = SeatMap.find(id_date(target.train_id, target.first_leave));
+      train_seat seat_info = SeatMap.find(todo);
+      SeatMap.erase(todo, seat_info);
       satisfy_order(seat_info, target.rank_s, target.rank_e - 1, -target.num);
-      sjtu::vector<pending> wait_list = PendingInfo.find(id_date(target.train_id, target.first_leave));
+      sjtu::vector<pending> wait_list = PendingInfo.find(todo);
       for (auto iter : wait_list) {
         if (available(seat_info, iter.start_rank, iter.end_rank - 1) >= iter.num) { // can fill the need
           target = OrderInfo.find_unique(iter.train_id, iter.time_stamp);
-          OrderInfo.erase(iter.train_id, target), SeatMap.erase(id_date(iter.train_id, target.first_leave), seat_info);
+          OrderInfo.erase(iter.train_id, target);
           target.state = Success;
           satisfy_order(seat_info, iter.start_rank, iter.end_rank - 1, iter.num);
-          OrderInfo.insert(iter.train_id, target), SeatMap.insert(id_date(iter.train_id, target.first_leave),
-                                                                  seat_info);
+          OrderInfo.insert(iter.train_id, target);
+          // std::cout << "buying back: " << target.first_leave << std::endl;
           PendingInfo.erase(id_date(iter.train_id, target.first_leave), pending(iter.time_stamp));
         }
       }
+      SeatMap.insert(todo, seat_info);
     }
     return true;
   }

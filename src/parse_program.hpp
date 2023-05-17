@@ -149,8 +149,8 @@ class Program {
           TokenScanner start(divide.NextToken(), '-'), end(divide.NextToken(), '-');
           int t1 = start.NextInteger(), t2 = start.NextInteger();
           int t3 = end.NextInteger(), t4 = end.NextInteger();
-          start_sale.change(2023, t1, t2);
-          end_sale.change(2023, t3, t4);
+          start_sale.change(t1, t2);
+          end_sale.change(t3, t4);
         }
         if (op1 == "-y") type = my_scanner.GetChar();
       }
@@ -182,10 +182,12 @@ class Program {
         train_id = my_scanner.NextToken();
         my_scanner.NextToken();
         TokenScanner divide(my_scanner.NextToken(), '-');
-        date.change(2023, divide.NextInteger(), divide.NextInteger());
+        int temp1 = divide.NextInteger(), temp2 = divide.NextInteger();
+        date.change(temp1, temp2);
       } else {
         TokenScanner divide(my_scanner.NextToken(), '-');
-        date.change(2023, divide.NextInteger(), divide.NextInteger());
+        int temp1 = divide.NextInteger(), temp2 = divide.NextInteger();
+        date.change(temp1, temp2);
         my_scanner.NextToken();
         train_id = my_scanner.NextToken();
       }
@@ -197,10 +199,11 @@ class Program {
       while (my_scanner.HasMoreToken()) {
         op1 = my_scanner.NextToken();
         if (op1 == "-s") start = my_scanner.NextToken();
-        if (op1 == "-t") start = my_scanner.NextToken();
+        if (op1 == "-t") end = my_scanner.NextToken();
         if (op1 == "-d") {
           TokenScanner divide(my_scanner.NextToken(), '-');
-          date.change(2023, divide.NextInteger(), divide.NextInteger());
+          int temp1 = divide.NextInteger(), temp2 = divide.NextInteger();
+          date.change(temp1, temp2);
         }
         if (op1 == "-p") {
           if (my_scanner.NextToken() == "time") {
@@ -221,7 +224,8 @@ class Program {
         if (op1 == "-t") start = my_scanner.NextToken();
         if (op1 == "-d") {
           TokenScanner divide(my_scanner.NextToken(), '-');
-          date.change(2023, divide.NextInteger(), divide.NextInteger());
+          int temp1 = divide.NextInteger(), temp2 = divide.NextInteger();
+          date.change(temp1, temp2);
         }
         if (op1 == "-p") {
           if (my_scanner.NextToken() == "time") {
@@ -243,7 +247,8 @@ class Program {
         if (op1 == "-i") train_id = my_scanner.NextToken();
         if (op1 == "-d") {
           TokenScanner divide(my_scanner.NextToken(), '-');
-          date.change(2023, my_scanner.NextInteger(), my_scanner.NextInteger());
+          int temp1 = divide.NextInteger(), temp2 = divide.NextInteger();
+          date.change(temp1, temp2);
         }
         if (op1 == "-n") num = my_scanner.NextInteger();
         if (op1 == "-f") from = my_scanner.NextToken();
@@ -279,6 +284,7 @@ class Program {
       user_system.clean();
       train_system.clean();
     } else if (op == "exit") {
+      std::cout << (output += "bye") << '\n';
       throw sjtu::exception();
     }
     return output;
