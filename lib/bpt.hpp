@@ -262,7 +262,7 @@ class BPlusTree {
   }
 
   bool empty() const {
-    return !size;
+    return !root.son_num;
   }
 
   int capacity() const {

@@ -157,7 +157,7 @@ class UserSystem {
       return "-1";
     }
     User target = UserMap.find(todo), original = target;
-    if (target.GetPrivilege() == -1 || LoginState[cur_name] <= target.GetPrivilege() && cur != username) {
+    if (LoginState.find(cur_name) == LoginState.end() || target.GetPrivilege() == -1 || LoginState[cur_name] <= target.GetPrivilege() && cur != username) {
       return "-1";
     }
     if (new_privilege != -1) {
@@ -169,7 +169,7 @@ class UserSystem {
     if (!new_password.empty()) target.ChangePassword(new_password);
     if (!new_name.empty()) target.ChangeName(new_name);
     if (!new_mailAddr.empty()) target.ChangeMail(new_mailAddr);
-    UserMap.modify(todo, original, target);
+    UserMap.erase(todo, original), UserMap.insert(todo, target);
     std::string ans =
         username + ' ' + target.GetName() + ' ' + target.GetMailAddr() + ' ' + std::to_string(target.GetPrivilege());
     return ans;

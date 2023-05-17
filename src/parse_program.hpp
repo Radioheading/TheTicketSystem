@@ -221,7 +221,7 @@ class Program {
       while (my_scanner.HasMoreToken()) {
         op1 = my_scanner.NextToken();
         if (op1 == "-s") start = my_scanner.NextToken();
-        if (op1 == "-t") start = my_scanner.NextToken();
+        if (op1 == "-t") end = my_scanner.NextToken();
         if (op1 == "-d") {
           TokenScanner divide(my_scanner.NextToken(), '-');
           int temp1 = divide.NextInteger(), temp2 = divide.NextInteger();
