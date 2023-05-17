@@ -1,6 +1,5 @@
 /*
  * @todo   1、调试剩下的点
- *         2、调试第二个点
  */
 
 
@@ -12,8 +11,8 @@ using namespace std;
 string operation;
 
 int main() {
-  freopen("1.in", "r", stdin);
-  freopen("my_2.out", "w", stdout);
+//  freopen("1.in", "r", stdin);
+//  freopen("my_2.out", "w", stdout);
   ios::sync_with_stdio(false);
   cin.tie(nullptr), cout.tie(nullptr);
   Program TicketSystem;

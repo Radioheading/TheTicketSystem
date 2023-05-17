@@ -111,17 +111,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named TheTicketSystem
+# Target rules for targets named code
 
 # Build rule for target.
-TheTicketSystem: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 TheTicketSystem
-.PHONY : TheTicketSystem
+code: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 code
+.PHONY : code
 
 # fast build rule for target.
-TheTicketSystem/fast:
-	$(MAKE) -f CMakeFiles/TheTicketSystem.dir/build.make CMakeFiles/TheTicketSystem.dir/build
-.PHONY : TheTicketSystem/fast
+code/fast:
+	$(MAKE) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/build
+.PHONY : code/fast
 
 main.o: main.cpp.o
 
@@ -129,7 +129,7 @@ main.o: main.cpp.o
 
 # target to build an object file
 main.cpp.o:
-	$(MAKE) -f CMakeFiles/TheTicketSystem.dir/build.make CMakeFiles/TheTicketSystem.dir/main.cpp.o
+	$(MAKE) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/main.cpp.o
 .PHONY : main.cpp.o
 
 main.i: main.cpp.i
@@ -138,7 +138,7 @@ main.i: main.cpp.i
 
 # target to preprocess a source file
 main.cpp.i:
-	$(MAKE) -f CMakeFiles/TheTicketSystem.dir/build.make CMakeFiles/TheTicketSystem.dir/main.cpp.i
+	$(MAKE) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/main.cpp.i
 .PHONY : main.cpp.i
 
 main.s: main.cpp.s
@@ -147,7 +147,7 @@ main.s: main.cpp.s
 
 # target to generate assembly for a file
 main.cpp.s:
-	$(MAKE) -f CMakeFiles/TheTicketSystem.dir/build.make CMakeFiles/TheTicketSystem.dir/main.cpp.s
+	$(MAKE) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/main.cpp.s
 .PHONY : main.cpp.s
 
 # Help Target
@@ -158,7 +158,7 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... TheTicketSystem"
+	@echo "... code"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

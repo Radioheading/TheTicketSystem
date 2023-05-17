@@ -1,5 +1,6 @@
-.idea
-cmake-build-debug
+.idea/
+cmake-build-debug/
 1.in
 1.out
 my_2.out
+testcases/
