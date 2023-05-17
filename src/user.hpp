@@ -102,8 +102,7 @@ class UserSystem {
 
   bool check_user(const std::string &username) {
     my_string<20> todo(username);
-    User res = UserMap.find(todo);
-    return res.GetPrivilege() != -1;
+    return LoginState.find(todo) != LoginState.end();
   }
 
   bool login(const std::string &username, const std::string &password) {

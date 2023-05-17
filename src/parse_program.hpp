@@ -194,7 +194,7 @@ class Program {
       output += train_system.query_train(date, train_id);
     } else if (op == "query_ticket") {
       std::string start, end, op1;
-      bool cmp;
+      bool cmp = true;
       Date date;
       while (my_scanner.HasMoreToken()) {
         op1 = my_scanner.NextToken();
@@ -216,7 +216,7 @@ class Program {
       output += train_system.query_ticket(start, end, date, cmp);
     } else if (op == "query_transfer") {
       std::string start, end, op1;
-      bool cmp;
+      bool cmp = true;
       Date date;
       while (my_scanner.HasMoreToken()) {
         op1 = my_scanner.NextToken();
@@ -240,7 +240,7 @@ class Program {
       std::string op1, username, train_id, from, to;
       int num;
       Date date;
-      bool wait;
+      bool wait = false;
       while (my_scanner.HasMoreToken()) {
         op1 = my_scanner.NextToken();
         if (op1 == "-u") username = my_scanner.NextToken();
@@ -266,12 +266,11 @@ class Program {
       }
     } else if (op == "refund_ticket") {
       std::string op1, username;
-      int num;
-      op1 = my_scanner.NextToken();
-      if (op1 == "-u") {
-        username = my_scanner.NextToken(), my_scanner.NextToken(), num = my_scanner.NextInteger();
-      } else {
-        num = my_scanner.NextInteger(), my_scanner.NextToken(), username = my_scanner.NextToken();
+      int num = 1;
+      while (my_scanner.HasMoreToken()) {
+        op1 = my_scanner.NextToken();
+        if (op1 == "-n") num = my_scanner.NextInteger();
+        if (op1 == "-u") username = my_scanner.NextToken();
       }
       if (user_system.check_user(username)) {
         if (train_system.refund_ticket(username, num)) {
@@ -279,6 +278,8 @@ class Program {
         } else {
           output += "-1";
         }
+      } else {
+        output += "-1";
       }
     } else if (op == "clean") {
       user_system.clean();
