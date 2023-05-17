@@ -228,10 +228,10 @@ class Time {
     return cmp_1.day < cmp_2.day || cmp_1.day == cmp_2.day && cmp_1.now < cmp_2.now;
   }
   friend bool leq_day(const Time &cmp_1, const Date &cmp_2) {
-    return cmp_1.day < cmp_2 || cmp_1.day == cmp_2;
+    return cmp_1.day <= cmp_2;
   }
   friend bool geq_day(const Time &cmp_1, const Date &cmp_2) {
-    return cmp_2 < cmp_1.day || cmp_1.day == cmp_2;
+    return cmp_2 <= cmp_1.day;
   }
   friend std::ostream &operator<<(std::ostream &stream_out, const Time &out) {
     stream_out << out.day << "-" << out.now / 60 << ' ' << out.now % 60;

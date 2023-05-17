@@ -512,13 +512,9 @@ class TrainSystem {
     Time start_left(ret.start_sale, ret.startTime / 60, ret.startTime % 60),
         start_right(ret.end_sale, ret.startTime / 60, ret.startTime % 60);
     start_left += leave.leave, start_right += leave.leave;
-    if (leq_day(start_left, date) && geq_day(start_right, date) && ret.release_state) { // valid buy
+    if (leq_day(start_left, date) && geq_day(start_right, date)) { // valid buy
       Date real_start = ret.start_sale + (date - start_left.day); // the real starting date
-      // std::cout << real_start << std::endl;
       train_seat seat_info = SeatMap.find(id_date(trainID, real_start));
-      if (seat_info.seat_num == -1) {
-        seat_info = train_seat(ret.stationNum, ret.seatNum, real_start);
-      }
       if (available(seat_info, leave.rank, arrive.rank - 1) >= num) { // can satisfy need
         SeatMap.erase(id_date(trainID, real_start), seat_info);
         satisfy_order(seat_info, leave.rank, arrive.rank - 1, num);
@@ -535,7 +531,7 @@ class TrainSystem {
                            order(Pending, arrive.prices_sum - leave.prices_sum,
                                  num, time, leave.rank, arrive.rank, username, trainID, from, to, start_time,
                                  start_time + (arrive.arrive - leave.leave), real_start));
-          PendingInfo.insert(id_date(trainID, date), pending(num, time, leave.rank, arrive.rank, username, trainID));
+          PendingInfo.insert(id_date(trainID, real_start), pending(num, time, leave.rank, arrive.rank, username, trainID));
           return "queue";
         } else { // can't buy tickets
           return "-1";
