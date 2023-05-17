@@ -266,7 +266,7 @@ class Program {
       }
     } else if (op == "refund_ticket") {
       std::string op1, username;
-      int num = 1;
+      int num;
       while (my_scanner.HasMoreToken()) {
         op1 = my_scanner.NextToken();
         if (op1 == "-n") num = my_scanner.NextInteger();
@@ -278,8 +278,6 @@ class Program {
         } else {
           output += "-1";
         }
-      } else {
-        output += "-1";
       }
     } else if (op == "clean") {
       user_system.clean();
@@ -292,4 +290,3 @@ class Program {
   }
 };
 #endif
-
