@@ -208,7 +208,8 @@ struct order {
     if (state == Pending) out += "pending] ";
     if (state == Refunded) out += "refunded] ";
     out += (std::string) train_id + ' ' + (std::string) from + ' ' + (std::string) departure;
-    out += " -> " + (std::string)to + ' ' +  (std::string) arrival + ' ' + std::to_string(price) + ' ' + std::to_string(num);
+    out += " -> " + (std::string) to + ' ' + (std::string) arrival + ' ' + std::to_string(price) + ' '
+        + std::to_string(num);
     return out;
   }
 };
@@ -235,11 +236,11 @@ struct pending {
 
 class TrainSystem {
  private:
-  BPlusTree<my_string<20>, Train, 50, 100> TrainMap;
+  BPlusTree<my_string<20>, Train, 100, 200> TrainMap;
   BPlusTree<id_date, train_seat, 200, 150> SeatMap;
-  MultiBPlusTree<my_string<40>, station_train, 100, 200> StationPass;
-  MultiBPlusTree<my_string<20>, order, 100, 200> OrderInfo;
-  MultiBPlusTree<id_date, pending, 100, 150> PendingInfo;
+  MultiBPlusTree<my_string<40>, station_train, 150, 250> StationPass;
+  MultiBPlusTree<my_string<20>, order, 200, 400> OrderInfo;
+  MultiBPlusTree<id_date, pending, 200, 250> PendingInfo;
  public:
   TrainSystem(const std::string &name_1, const std::string &name_2,
               const std::string &name_3, const std::string &name_4,
@@ -315,13 +316,13 @@ class TrainSystem {
         if (i == 1) {
           ans += "xx-xx xx:xx";
         } else {
-          ans += (std::string) (Time(date) + ret.startTime + ret.arrive_time[i]);
+          ans += (std::string)(Time(date) + ret.startTime + ret.arrive_time[i]);
         }
         ans += " -> ";
         if (i == ret.stationNum) {
           ans += "xx-xx xx:xx";
         } else {
-          ans += (std::string) (Time(date) + ret.startTime + ret.leave_time[i]);
+          ans += (std::string)(Time(date) + ret.startTime + ret.leave_time[i]);
         }
         ans += ' ' + std::to_string(ret.prices_sum[i]) + ' ';
         if (i == ret.stationNum) {
@@ -373,7 +374,7 @@ class TrainSystem {
     std::string out = std::to_string(tickets.size());
     for (auto iter = tickets.begin(); iter != tickets.end(); ++iter) {
       out +=
-          '\n' + (std::string) (*iter).train_id + ' ' + start + ' ' + std::string((*iter).depart) + " -> " + end + ' '
+          '\n' + (std::string)(*iter).train_id + ' ' + start + ' ' + std::string((*iter).depart) + " -> " + end + ' '
               + std::string((*iter).arrive) + ' ' + std::to_string((*iter).price) + ' ' + std::to_string((*iter).seat);
     }
     return out;
@@ -386,7 +387,7 @@ class TrainSystem {
     sjtu::vector<station_train> t_list = StationPass.find(my_string<40>(end));
     sjtu::map<my_string<20>, Train> end_list; // reduce redundant I/O
     sjtu::map<id_date, train_seat> end_trains;
-    int best_time = 2147483646, best_cost = 2147483646;
+    int best_time = 2147483647, best_cost = 2147483647;
     std::string mid_transport;
     if (t_list.empty()) {
       return "0";
@@ -402,11 +403,10 @@ class TrainSystem {
       Date s_start = train_s.start_sale + (date - left.day);
       train_seat s_seat = SeatMap.find(id_date(s_iter.train_id, train_s.start_sale + (date - left.day))), t_seat;
       sjtu::map<std::string, int> station_list;
-      for (int i = s_iter.rank + 1; i < train_s.stationNum; ++i) {
+      for (int i = s_iter.rank + 1; i <= train_s.stationNum; ++i) {
         station_list[std::string(train_s.stations[i])] = i;
       }
       for (auto t_iter : t_list) {
-        // std::cout << s_iter.train_id << ' ' << t_iter.train_id << '\n';
         if (s_iter.train_id == t_iter.train_id) continue;
         // must have one transfer
         if (end_list.find(t_iter.train_id) == end_list.end()) { // read from disk
@@ -417,7 +417,6 @@ class TrainSystem {
         }
         for (int i = 1; i < t_iter.rank; ++i) { // enumerate the transfer station
           std::string mid = std::string(train_t.stations[i]);
-          // std::cout << "mid: " << mid << '\n';
           if (station_list.find(mid) == station_list.end()) continue;
           // check whether train_t leaves after train_s arrives
           // by calculating the earliest time when train_t leaves
@@ -431,7 +430,8 @@ class TrainSystem {
           optimal += mod_minus(t_right, s_arrive);
           if (optimal < t_left) optimal = t_left;
           Date t_start = train_t.start_sale + (optimal.day - t_left.day);
-          int least_time = optimal - s_arrive;
+          int least_time = optimal - s_arrive - train_s.leave_time[s_iter.rank] + train_s.arrive_time[station_list[mid]]
+              + train_t.arrive_time[t_iter.rank] - train_t.leave_time[i];
           int now_cost = train_s.prices_sum[station_list[mid]] - s_iter.prices_sum
               + t_iter.prices_sum - train_t.prices_sum[i];
           bool better = false;
@@ -478,20 +478,27 @@ class TrainSystem {
             mid_transport = mid;
             s_ticket = ticket_info(s_iter.train_id,
                                    Time(date, left.now / 60, left.now % 60),
-                                   Time(date, left.now / 60, left.now % 60) + (- train_s.leave_time[s_iter.rank] + train_s.arrive_time[station_list[mid]]),
+                                   Time(date, left.now / 60, left.now % 60)
+                                       + (-train_s.leave_time[s_iter.rank] + train_s.arrive_time[station_list[mid]]),
                                    train_s.prices_sum[station_list[mid]] - s_iter.prices_sum,
                                    available(s_seat, s_iter.rank, station_list[mid] - 1),
                                    0);
-            t_ticket = ticket_info(t_iter.train_id, optimal, optimal + (train_t.arrive_time[t_iter.rank] - train_t.leave_time[i]), t_iter.prices_sum - train_t.prices_sum[i],
-                                   available(t_seat, i, t_iter.rank - 1), 0);
+            t_ticket = ticket_info(t_iter.train_id,
+                                   optimal,
+                                   optimal + (train_t.arrive_time[t_iter.rank] - train_t.leave_time[i]),
+                                   t_iter.prices_sum - train_t.prices_sum[i],
+                                   available(t_seat, i, t_iter.rank - 1),
+                                   0);
           }
         }
       }
     }
     if (found) {
-      ret = std::string(s_ticket.train_id) + ' ' + start + ' ' + std::string(s_ticket.depart) + " -> " + mid_transport + ' '
+      ret = std::string(s_ticket.train_id) + ' ' + start + ' ' + std::string(s_ticket.depart) + " -> " + mid_transport
+          + ' '
           + std::string(s_ticket.arrive) + ' ' + std::to_string(s_ticket.price) + ' ' + std::to_string((s_ticket.seat));
-      ret += '\n' + std::string(t_ticket.train_id) + ' ' + mid_transport + ' ' + std::string(t_ticket.depart) + " -> " + end + ' '
+      ret += '\n' + std::string(t_ticket.train_id) + ' ' + mid_transport + ' ' + std::string(t_ticket.depart) + " -> "
+          + end + ' '
           + std::string(t_ticket.arrive) + ' ' + std::to_string(t_ticket.price) + ' ' + std::to_string((t_ticket.seat));
     } else {
       ret = "0";
@@ -530,7 +537,8 @@ class TrainSystem {
                            order(Pending, arrive.prices_sum - leave.prices_sum,
                                  num, time, leave.rank, arrive.rank, username, trainID, from, to, start_time,
                                  start_time + (arrive.arrive - leave.leave), real_start));
-          PendingInfo.insert(id_date(trainID, real_start), pending(num, time, leave.rank, arrive.rank, username, trainID));
+          PendingInfo.insert(id_date(trainID, real_start),
+                             pending(num, time, leave.rank, arrive.rank, username, trainID));
           return "queue";
         } else { // can't buy tickets
           return "-1";

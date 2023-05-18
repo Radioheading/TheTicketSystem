@@ -604,15 +604,12 @@ class BPlusTree {
     return true;
   }
   void ReadNode(node &obj, int place) {
-    // std::cout << "node place: " << place << '\n';
     if (!node_cache.GetNode(obj, place)) {
       tree.seekg(place);
       tree.read(reinterpret_cast<char *>(&obj), sizeof(obj));
-      // std::cout << "node_cache miss!\n";
     }
   }
   void ReadLeaf(leaves &obj, int place) {
-    // std::cout << "leaf place: " << place << '\n';
     if (!leaf_cache.GetNode(obj, place)) {
       data.seekg(place);
       data.read(reinterpret_cast<char *>(&obj), sizeof(obj));
