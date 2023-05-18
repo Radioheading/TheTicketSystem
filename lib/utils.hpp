@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring>
 #include <iostream>
+#include <cmath>
 #include "../src/train.hpp"
 
 template<int length>
@@ -180,7 +181,7 @@ class Time {
     return *this;
   }
   friend int mod_minus(const Time &op1, const Time &op2) {
-    return (op1.now - op2.now) % 1440;
+    return (op1.now - op2.now + 1440) % 1440;
   }
   /*
    * the so-called "operator-" returns in the form of integer

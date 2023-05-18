@@ -426,12 +426,10 @@ class TrainSystem {
           Time t_right(train_t.end_sale, train_t.startTime / 60, train_t.startTime % 60);
           Time t_left(train_t.start_sale, train_t.startTime / 60, train_t.startTime % 60);
           t_right += train_t.leave_time[i], t_left += train_t.leave_time[i];
-          // std::cout << t_right << ' ' << s_arrive << '\n';
           if (t_right < s_arrive) continue;
           Time optimal(s_arrive);
-          optimal += mod_minus(t_left, s_arrive);
-          optimal = optimal < t_left ? t_left : optimal;
-          // std::cout << "optimal time: " << (std::string)optimal << '\n';
+          optimal += mod_minus(t_right, s_arrive);
+          if (optimal < t_left) optimal = t_left;
           Date t_start = train_t.start_sale + (optimal.day - t_left.day);
           int least_time = optimal - s_arrive;
           int now_cost = train_s.prices_sum[station_list[mid]] - s_iter.prices_sum
