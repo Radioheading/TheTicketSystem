@@ -117,13 +117,14 @@ struct id_date {
 };
 
 struct station_train {
+  size_t id_key{};
   int leave = 0, arrive = 0, prices_sum = 0, rank = 0, start_time = 0;
   my_string<20> train_id;
   station_train() = default;
   explicit station_train(const std::string &_train_id) : train_id(_train_id) {}
   station_train(int _leave, int _arrive, int _sum, const my_string<20> &id, int _rank, int _start_time)
       : leave(_leave), arrive(_arrive), prices_sum(_sum), rank(_rank), start_time(_start_time),
-        train_id(id) {};
+        train_id(id), id_key(MyHash(id)) {};
 
   friend bool operator<(const station_train &cmp_1, const station_train &cmp_2) {
     return cmp_1.train_id < cmp_2.train_id;
@@ -237,11 +238,11 @@ struct pending {
 
 class TrainSystem {
  private:
-  BPlusTree<size_t, Train, 50, 100> TrainMap;
-  BPlusTree<id_date, train_seat, 100, 200> SeatMap;
-  MultiBPlusTree<size_t, station_train, 100, 200> StationPass;
-  MultiBPlusTree<size_t, order, 100, 200> OrderInfo;
-  MultiBPlusTree<id_date, pending, 100, 150> PendingInfo;
+  BPlusTree<size_t, Train, 20, 20> TrainMap;
+  BPlusTree<id_date, train_seat, 16, 16> SeatMap;
+  MultiBPlusTree<size_t, station_train, 110, 110> StationPass;
+  MultiBPlusTree<size_t, order, 64, 64> OrderInfo;
+  MultiBPlusTree<id_date, pending, 150, 150> PendingInfo;
  public:
   TrainSystem(const std::string &name_1, const std::string &name_2,
               const std::string &name_3, const std::string &name_4,
@@ -351,7 +352,7 @@ class TrainSystem {
         break;
       }
       if ((*iter_1).train_id == (*iter_2).train_id && (*iter_1).rank < (*iter_2).rank) { // right version
-        Train ret = TrainMap.find(MyHash((*iter_1).train_id));
+        Train ret = TrainMap.find((*iter_1).id_key);
         // judging the validity of date
         Time start_left(ret.start_sale, ret.startTime / 60, ret.startTime % 60),
             start_right(ret.end_sale, ret.startTime / 60, ret.startTime % 60);
@@ -388,7 +389,7 @@ class TrainSystem {
     std::string ret;
     sjtu::vector<station_train> s_list = StationPass.find(MyHash(start));
     sjtu::vector<station_train> t_list = StationPass.find(MyHash(end));
-    sjtu::map<std::string, Train> end_list; // reduce redundant I/O
+    sjtu::map<my_string<20>, Train> end_list; // reduce redundant I/O
     sjtu::map<id_date, train_seat> end_trains;
     int best_time = 2147483647, best_cost = 2147483647;
     std::string mid_transport;
@@ -397,14 +398,14 @@ class TrainSystem {
     }
     ticket_info s_ticket, t_ticket;
     for (auto s_iter : s_list) {
-      Train train_s(TrainMap.find(MyHash(s_iter.train_id))), train_t;
+      Train train_s(TrainMap.find(s_iter.id_key)), train_t;
       Time left(train_s.start_sale, train_s.startTime / 60, train_s.startTime % 60);
       Time right(train_s.end_sale, train_s.startTime / 60, train_s.startTime % 60);
       left += s_iter.leave, right += s_iter.leave;
       // std::cout << left << ' ' << date << ' ' << right << '\n';
       if (!leq_day(left, date) || !geq_day(right, date)) continue;
       Date s_start = train_s.start_sale + (date - left.day);
-      train_seat s_seat = SeatMap.find(id_date(MyHash(s_iter.train_id), train_s.start_sale + (date - left.day))), t_seat;
+      train_seat s_seat = SeatMap.find(id_date(s_iter.id_key, train_s.start_sale + (date - left.day))), t_seat;
       sjtu::map<std::string, int> station_list;
       for (int i = s_iter.rank + 1; i <= train_s.stationNum; ++i) {
         station_list[std::string(train_s.stations[i])] = i;
@@ -412,11 +413,11 @@ class TrainSystem {
       for (auto t_iter : t_list) {
         if (s_iter.train_id == t_iter.train_id) continue;
         // must have one transfer
-        if (end_list.find(std::string(t_iter.train_id)) == end_list.end()) { // read from disk
-          train_t = TrainMap.find(MyHash(t_iter.train_id));
-          end_list[std::string(t_iter.train_id)] = train_t;
+        if (end_list.find(t_iter.train_id) == end_list.end()) { // read from disk
+          train_t = TrainMap.find(t_iter.id_key);
+          end_list[t_iter.train_id] = train_t;
         } else {
-          train_t = end_list[std::string(t_iter.train_id)];
+          train_t = end_list[t_iter.train_id];
         }
         for (int i = 1; i < t_iter.rank; ++i) { // enumerate the transfer station
           std::string mid = std::string(train_t.stations[i]);
@@ -438,7 +439,7 @@ class TrainSystem {
           int now_cost = train_s.prices_sum[station_list[mid]] - s_iter.prices_sum
               + t_iter.prices_sum - train_t.prices_sum[i];
           bool better = false;
-          id_date todo(MyHash(t_iter.train_id), t_start);
+          id_date todo(t_iter.id_key, t_start);
           if (end_trains.find(todo) != end_trains.end()) {
             t_seat = end_trains[todo];
           } else {
@@ -564,7 +565,7 @@ class TrainSystem {
 
   bool refund_ticket(const std::string &username, int num) {
     size_t user_key = MyHash(username);
-    sjtu::vector<order> ret = OrderInfo.find(MyHash(username));
+    sjtu::vector<order> ret = OrderInfo.find(user_key);
     if (ret.size() < num || ret[num - 1].state == Refunded) return false;
     order target(ret[num - 1]);
     TicketState origin = target.state;
@@ -601,5 +602,3 @@ class TrainSystem {
 };
 
 #endif
-
-
