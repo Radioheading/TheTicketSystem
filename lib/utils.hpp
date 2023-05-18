@@ -243,8 +243,9 @@ class Time {
 template<class iterator, class Compare = std::less<typename iterator::value_type>>
 void sort(iterator left, iterator right, Compare cmp = Compare{}) {
   if (left - right >= -1) return;
-  typename iterator::value_type index(*left);
   iterator l(left), r(--right);
+  std::swap(*l, *(l + rand() % (r - l)));
+  typename iterator::value_type index(*left);
   ++right;
   while (r - l > 0) {
     while (cmp(*l, index) && right - l > 0 && r - l > 0) ++l;
