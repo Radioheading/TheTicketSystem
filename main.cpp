@@ -9,20 +9,18 @@
 #include <iostream>
 #include "src/parse_program.hpp"
 
-using namespace std;
-
-string operation;
+std::string operation;
 
 int main() {
 //  freopen("1.in", "r", stdin);
 //  freopen("my_1.out", "w", stdout);
-  ios::sync_with_stdio(false);
-  cin.tie(nullptr), cout.tie(nullptr);
+  std::ios::sync_with_stdio(false);
+  std::cin.tie(nullptr), std::cout.tie(nullptr);
   Program TicketSystem;
-  while (getline(cin, operation)) {
+  while (getline(std::cin, operation)) {
     try {
       TicketSystem.GetNew(operation);
-      std::cout << TicketSystem.parse() << endl;
+      std::cout << TicketSystem.parse() << '\n';
     } catch (...) {
       return 0;
     }

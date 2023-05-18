@@ -94,8 +94,7 @@ class Program {
         output += "-1";
       }
     } else if (op == "add_train") {
-      std::string op1, train_id;
-      my_string<40> stations[101];
+      std::string op1, train_id, stations[101];
       int station_num, seat_num, prices[100], travel_time[100], stop_time[100];
       int start_h, start_m;
       char type;
