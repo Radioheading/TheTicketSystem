@@ -129,7 +129,7 @@ class MultiBPlusTree {
     current_node = root;
     while (current_node.state != leaf) {
       if (current_node.son_num == 0) {
-        std::cout << "no son!\n";
+        // std::cout << "no son!\n";
         return ret;
       }
       int place = LowerBound(another, current_node.index, 1, current_node.son_num - 1);
@@ -137,19 +137,19 @@ class MultiBPlusTree {
       WriteNode(current_node);
     }
     if (current_node.son_num == 0) {
-      std::cout << "no data!\n";
+      // std::cout << "no data!\n";
       return ret;
     }
     int search = LowerBound(another, current_node.index, 1, current_node.son_num - 1);
     ReadLeaf(current_leaf, current_node.son_pos[search]);
-    for (int i = 1; i <= current_leaf.data_num; ++i) {
-      std::cout << current_leaf.storage[i].key << ' ';
-    }
-    std::cout << '\n';
+//    for (int i = 1; i <= current_leaf.data_num; ++i) {
+//      std::cout << current_leaf.storage[i].key << ' ';
+//    }
+//    std::cout << '\n';
     int pos = BinarySearch(another, current_leaf.storage, 1, current_leaf.data_num);
     while (true) {
       for (int i = pos; i <= current_leaf.data_num; ++i) {
-        std::cout << "checking: " << current_leaf.storage[i].key << '\n';
+        // std::cout << "checking: " << current_leaf.storage[i].key << '\n';
         if (current_leaf.storage[i].key == key) {
           ret.push_back(current_leaf.storage[i].value);
         } else {
@@ -159,7 +159,7 @@ class MultiBPlusTree {
       }
       WriteLeaves(current_leaf);
       if (current_leaf.next_pos) { // getting next leaf
-        std::cout << "get next leaf!\n";
+        // std::cout << "get next leaf!\n";
         ReadLeaf(current_leaf, current_leaf.next_pos);
         pos = 1;
       } else break;
