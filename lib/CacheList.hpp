@@ -10,7 +10,7 @@ using std::pair;
  * this is a simulation of the LRU policy, using a hashmap and a linklist to save the
  * recently-used block, which can boost efficiency (especially during find)
  */
-const int max_cache = 3000;
+const int max_cache = 1000;
 const int map_size = 23475;
 const int mod = 23473;
 int rehash[20] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};

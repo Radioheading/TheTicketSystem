@@ -73,11 +73,16 @@ class User {
 
 class UserSystem {
  private:
-  BPlusTree<my_string<20>, User, 150, 202> UserMap;
-  sjtu::map<my_string<20>, int> LoginState;
+  BPlusTree<size_t, User, 150, 302> UserMap;
+  sjtu::map<std::string, int> LoginState;
  public:
   // 1 for successful operation and 0 for unsuccessful
   UserSystem(const std::string &name_1, const std::string &name_2) : UserMap(name_1, name_2) {}
+
+  bool check_user(const std::string &username) {
+    return LoginState.find(username) != LoginState.end();
+  }
+
   bool add_user(const std::string &cur,
                 const std::string &username,
                 const std::string &password,
@@ -85,32 +90,27 @@ class UserSystem {
                 const std::string &mailAddr,
                 int privilege) {
     int real_privilege = privilege;
-    my_string<20> cur_name(cur), todo(username);
+    size_t user_key = MyHash(username);
     if (UserMap.empty()) {
       real_privilege = 10;
     } else {
-      auto target = UserMap.find(todo);
-      if (target.GetPrivilege() != -1 || LoginState.find(cur_name) == LoginState.end()
-          || privilege >= LoginState[cur_name]) {
+      auto target = UserMap.find(user_key);
+      if (target.GetPrivilege() != -1 || LoginState.find(cur) == LoginState.end()
+          || privilege >= LoginState[cur]) {
         return false;
       }
     }
     User to_add(username, password, name, mailAddr, real_privilege);
-    UserMap.insert(username, to_add);
+    UserMap.insert(user_key, to_add);
     return true;
   }
 
-  bool check_user(const std::string &username) {
-    my_string<20> todo(username);
-    return LoginState.find(todo) != LoginState.end();
-  }
-
   bool login(const std::string &username, const std::string &password) {
-    my_string<20> todo(username);
-    if (LoginState.find(todo) != LoginState.end()) {
+    size_t user_key = MyHash(username);
+    if (LoginState.find(username) != LoginState.end()) {
       return false;
     }
-    User res = UserMap.find(todo);
+    User res = UserMap.find(user_key);
     if (res.GetPrivilege() == -1) {
       return false;
     }
@@ -122,8 +122,7 @@ class UserSystem {
   }
 
   bool logout(const std::string &username) {
-    my_string<20> todo(username);
-    auto temp = LoginState.find(todo);
+    auto temp = LoginState.find(username);
     if (temp != LoginState.end()) {
       LoginState.erase(temp);
       return true;
@@ -133,12 +132,12 @@ class UserSystem {
   }
 
   std::string query_profile(const std::string &cur, const std::string &username) {
-    my_string<20> cur_name(cur), todo(username);
-    if (LoginState.count(cur_name) == 0) {
+    size_t user_key = MyHash(username);;
+    if (LoginState.count(cur) == 0) {
       return "-1";
     }
-    User target = UserMap.find(todo);
-    if (target.GetPrivilege() == -1 || (LoginState[cur_name] <= target.GetPrivilege() && cur != username)) {
+    User target = UserMap.find(user_key);
+    if (target.GetPrivilege() == -1 || (LoginState[cur] <= target.GetPrivilege() && cur != username)) {
       return "-1";
     }
     std::string ans =
@@ -152,24 +151,24 @@ class UserSystem {
                              const std::string &new_name,
                              const std::string &new_mailAddr,
                              int new_privilege) {
-    my_string<20> cur_name(cur), todo(username);
-    if (LoginState.find(cur_name) == LoginState.end()) {
+    size_t user_key = MyHash(username);
+    if (LoginState.find(cur) == LoginState.end()) {
       return "-1";
     }
-    User target = UserMap.find(todo), original = target;
-    if (LoginState.find(cur_name) == LoginState.end() || target.GetPrivilege() == -1 || LoginState[cur_name] <= target.GetPrivilege() && cur != username) {
+    User target = UserMap.find(user_key), original = target;
+    if (LoginState.find(cur) == LoginState.end() || target.GetPrivilege() == -1 || LoginState[cur] <= target.GetPrivilege() && cur != username) {
       return "-1";
     }
     if (new_privilege != -1) {
       target.ChangePrivilege(new_privilege);
-      if (LoginState.find(todo) != LoginState.end()) {
-        LoginState[todo] = new_privilege;
+      if (LoginState.find(username) != LoginState.end()) {
+        LoginState[username] = new_privilege;
       }
     }
     if (!new_password.empty()) target.ChangePassword(new_password);
     if (!new_name.empty()) target.ChangeName(new_name);
     if (!new_mailAddr.empty()) target.ChangeMail(new_mailAddr);
-    UserMap.erase(todo, original), UserMap.insert(todo, target);
+    UserMap.erase(user_key, original), UserMap.insert(user_key, target);
     std::string ans =
         username + ' ' + target.GetName() + ' ' + target.GetMailAddr() + ' ' + std::to_string(target.GetPrivilege());
     return ans;

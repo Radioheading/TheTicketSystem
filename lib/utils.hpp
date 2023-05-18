@@ -257,4 +257,20 @@ void sort(iterator left, iterator right, Compare cmp = Compare{}) {
   }
   sort(left, r, cmp), sort(r + 1, right, cmp);
 }
+
+template<int size>
+size_t MyHash(const my_string<size> &todo) {
+  size_t ret = 0;
+  for (int i = 0; i < size && todo.info[i]; ++i) {
+    ret = ret * 263 + todo.info[i];
+  }
+  return ret;
+}
+size_t MyHash(const std::string &todo) {
+  size_t ret = 0;
+  for (int i = 0; i < todo.length() && todo[i]; ++i) {
+    ret = ret * 263 + todo[i];
+  }
+  return ret;
+}
 #endif

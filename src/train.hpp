@@ -9,6 +9,7 @@
 #include "../lib/mutibpt.hpp"
 #include "../lib/exceptions.hpp"
 #include "../lib/vector.hpp"
+#include <unordered_map>
 
 const int max_info = 101;
 
@@ -237,10 +238,10 @@ struct pending {
 class TrainSystem {
  private:
   BPlusTree<my_string<20>, Train, 100, 200> TrainMap;
-  BPlusTree<id_date, train_seat, 200, 150> SeatMap;
-  MultiBPlusTree<my_string<40>, station_train, 150, 250> StationPass;
-  MultiBPlusTree<my_string<20>, order, 200, 400> OrderInfo;
-  MultiBPlusTree<id_date, pending, 200, 250> PendingInfo;
+  BPlusTree<id_date, train_seat, 100, 150> SeatMap;
+  MultiBPlusTree<my_string<40>, station_train, 150, 200> StationPass;
+  MultiBPlusTree<my_string<20>, order, 200, 200> OrderInfo;
+  MultiBPlusTree<id_date, pending, 250, 200> PendingInfo;
  public:
   TrainSystem(const std::string &name_1, const std::string &name_2,
               const std::string &name_3, const std::string &name_4,
