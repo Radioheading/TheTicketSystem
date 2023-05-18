@@ -398,7 +398,7 @@ class TrainSystem {
       Time right(train_s.end_sale, train_s.startTime / 60, train_s.startTime % 60);
       left += s_iter.leave, right += s_iter.leave;
       // std::cout << left << ' ' << date << ' ' << right << '\n';
-      if (!leq_day(left, date) && geq_day(right, date)) continue;
+      if (!leq_day(left, date) || !geq_day(right, date)) continue;
       Date s_start = train_s.start_sale + (date - left.day);
       train_seat s_seat = SeatMap.find(id_date(s_iter.train_id, train_s.start_sale + (date - left.day))), t_seat;
       sjtu::map<std::string, int> station_list;
