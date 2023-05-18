@@ -514,6 +514,7 @@ class TrainSystem {
     start_left += leave.leave, start_right += leave.leave;
     if (leq_day(start_left, date) && geq_day(start_right, date)) { // valid buy
       Date real_start = ret.start_sale + (date - start_left.day); // the real starting date
+      // std::cout << "date: " << real_start << '\n';
       train_seat seat_info = SeatMap.find(id_date(trainID, real_start));
       if (available(seat_info, leave.rank, arrive.rank - 1) >= num) { // can satisfy need
         SeatMap.erase(id_date(trainID, real_start), seat_info);
@@ -569,11 +570,11 @@ class TrainSystem {
       sjtu::vector<pending> wait_list = PendingInfo.find(todo);
       for (auto iter : wait_list) {
         if (available(seat_info, iter.start_rank, iter.end_rank - 1) >= iter.num) { // can fill the need
-          target = OrderInfo.find_unique(iter.train_id, iter.time_stamp);
-          OrderInfo.erase(iter.train_id, target);
+          target = OrderInfo.find_unique(iter.username, iter.time_stamp);
+          OrderInfo.erase(iter.username, target);
           target.state = Success;
           satisfy_order(seat_info, iter.start_rank, iter.end_rank - 1, iter.num);
-          OrderInfo.insert(iter.train_id, target);
+          OrderInfo.insert(iter.username, target);
           PendingInfo.erase(todo, pending(iter.time_stamp));
         }
       }
