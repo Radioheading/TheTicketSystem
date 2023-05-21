@@ -58,7 +58,7 @@ class MultiBPlusTree {
     bool changed = false;
     NodeState state = middle;
     int son_num = 0, son_pos[max_son + 1];
-    Index index[max_son + 1];
+    Index index[max_son];
     node(bool did = false) : changed(did) {}
   } current_node;
   struct leaves {

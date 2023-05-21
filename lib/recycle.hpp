@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 
-const int max_bin = 10;
+const int max_bin = 100;
 
 struct before {
   int size = 0;
