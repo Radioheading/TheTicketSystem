@@ -50,12 +50,12 @@ struct Train {
 };
 
 struct train_seat {
-  int seat[max_info]{}, station_num = 0, seat_num = -1;
+  int seat[max_info - 1]{}, station_num = 0, seat_num = -1;
   Date start_date; // we store the day when the train departs
 
   train_seat(int _station_num, int _seat_num, const Date &_start_date)
       : station_num(_station_num), seat_num(_seat_num), start_date(_start_date) {
-    for (int i = 1; i <= station_num; ++i) seat[i] = seat_num;
+    for (int i = 0; i < station_num; ++i) seat[i] = seat_num;
   }
 
   train_seat() : station_num(0), seat_num(0) {};
@@ -63,9 +63,9 @@ struct train_seat {
 
 int available(const train_seat &seat, int l, int r) {
   int ans;
-  for (int i = l; i <= r; ++i) {
-    if (i == l) {
-      ans = seat.seat[l];
+  for (int i = l - 1; i < r; ++i) {
+    if (i == l - 1) {
+      ans = seat.seat[l - 1];
     } else {
       ans = std::min(seat.seat[i], ans);
     }
@@ -74,7 +74,7 @@ int available(const train_seat &seat, int l, int r) {
 }
 
 void satisfy_order(train_seat &seat, int l, int r, int num) {
-  for (int i = l; i <= r; ++i) {
+  for (int i = l - 1; i < r; ++i) {
     seat.seat[i] -= num;
   }
 }
@@ -268,8 +268,8 @@ class TrainSystem {
     TrainMap.insert(train_key, res);
     for (int i = 1; i <= res.stationNum; ++i) {
       StationPass.insert(MyHash(res.stations[i]), res.trainID, station_train(res.leave_time[i], res.arrive_time[i],
-                                                        res.prices_sum[i], res.trainID,
-                                                        i, res.startTime));
+                                                                             res.prices_sum[i], res.trainID,
+                                                                             i, res.startTime));
     }
     for (Date iter = res.start_sale; iter <= res.end_sale; ++iter) {
       SeatMap.insert(id_date(train_key, iter), train_seat(res.stationNum, res.seatNum, iter));
@@ -304,7 +304,7 @@ class TrainSystem {
           ans += 'x';
         } else {
           if (ret.release_state) {
-            ans += std::to_string(the_seat.seat[i]);
+            ans += std::to_string(the_seat.seat[i - 1]);
           } else {
             ans += std::to_string(ret.seatNum);
           }
@@ -503,8 +503,8 @@ class TrainSystem {
         SeatMap.insert(todo, seat_info);
         Time start_time(date, start_left.now / 60, start_left.now % 60);
         OrderInfo.insert(MyHash(username), -time + 2147483647, order(Success, arrive.prices_sum - leave.prices_sum,
-                                         num, time, leave.rank, arrive.rank, username, trainID, from, to,
-                                         start_time, start_time + (arrive.arrive - leave.leave), real_start));
+                                                                     num, time, leave.rank, arrive.rank, username, trainID, from, to,
+                                                                     start_time, start_time + (arrive.arrive - leave.leave), real_start));
         return std::to_string(num * (arrive.prices_sum - leave.prices_sum));
       } else {
         if (wait) {

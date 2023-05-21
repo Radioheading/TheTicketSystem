@@ -1,7 +1,6 @@
 /*
- * @todo   1、调试basic6之后点的正确性
- *         2、调整bpt的modify
- *         3、调整bpt缓存的正确性
+ * @todo   1、减少外存使用！SeatMap第二关键字为哈希值
+ *         2、加快速度，部署modify
  */
 
 
