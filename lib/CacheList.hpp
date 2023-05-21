@@ -10,13 +10,13 @@ using std::pair;
  * this is a simulation of the LRU policy, using a hashmap and a linklist to save the
  * recently-used block, which can boost efficiency (especially during find)
  */
-const int max_cache = 50;
-const int map_size = 1011;
-const int mod = 1009;
-int rehash[20] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};
 
 template<class T>
 class CachePool {
+  static const int max_cache = 100 * 1024 / sizeof(T);
+  static const int map_size = 10140;
+  static const int mod = 10133;
+  constexpr static const int rehash[20] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};
  private:
   struct cache_node {
     int address = 0;
@@ -30,9 +30,9 @@ class CachePool {
   class cache {
    public:
    private:
-    int size = 0;
     std::fstream &out;
    public:
+    int size = 0;
     cache_node *head, *tail;
     explicit cache(std::fstream &out_) : out(out_), size(0) {
       head = new cache_node(), tail = new cache_node();
@@ -76,6 +76,7 @@ class CachePool {
 
     void pop_back() {
       cache_node *todo = tail->prev;
+      if (todo->data.address == 0) return;
       if (todo->data.changed) {
         todo->data.changed = false;
         out.seekp(todo->address);
@@ -180,6 +181,9 @@ class CachePool {
   }
   void clear() {
     block_pool.ClearPool();
+  }
+  int size() {
+    return block_pool.size;
   }
 };
 #endif //BPT__CACHELIST_HPP_

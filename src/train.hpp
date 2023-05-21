@@ -23,14 +23,6 @@ struct Train {
   Date start_sale{}, end_sale{};
   char type{};
 
-  friend bool operator<(const Train &cmp_1, const Train &cmp_2) {
-    return cmp_1.trainID < cmp_2.trainID;
-  }
-
-  friend bool operator==(const Train &cmp_1, const Train &cmp_2) {
-    return cmp_1.trainID == cmp_2.trainID;
-  }
-
   Train() = default;
 
   Train(const Train &other) {
@@ -67,13 +59,6 @@ struct train_seat {
   }
 
   train_seat() : station_num(0), seat_num(0) {};
-
-  friend bool operator==(const train_seat &cmp_1, const train_seat &cmp_2) {
-    return cmp_1.start_date == cmp_2.start_date;
-  }
-  friend bool operator<(const train_seat &cmp_1, const train_seat &cmp_2) {
-    return cmp_1.start_date < cmp_2.start_date;
-  }
 };
 
 int available(const train_seat &seat, int l, int r) {
@@ -125,14 +110,6 @@ struct station_train {
   station_train(int _leave, int _arrive, int _sum, const my_string<20> &id, int _rank, int _start_time)
       : leave(_leave), arrive(_arrive), prices_sum(_sum), rank(_rank), start_time(_start_time),
         train_id(id), id_key(MyHash(id)) {};
-
-  friend bool operator<(const station_train &cmp_1, const station_train &cmp_2) {
-    return cmp_1.train_id < cmp_2.train_id;
-  }
-
-  friend bool operator==(const station_train &cmp_1, const station_train &cmp_2) {
-    return cmp_1.train_id == cmp_2.train_id;
-  }
 };
 
 struct ticket_info {
@@ -196,14 +173,6 @@ struct order {
                                                              departure(_departure),
                                                              arrival(_arrival),
                                                              first_leave(_first_leave) {}
-  friend bool operator<(const order &cmp_1, const order &cmp_2) {
-    return cmp_1.time_stamp > cmp_2.time_stamp;
-  }
-
-  friend bool operator==(const order &cmp_1, const order &cmp_2) {
-    return cmp_1.time_stamp == cmp_2.time_stamp;
-  }
-
   explicit operator std::string() const {
     std::string out = "[";
     if (state == Success) out += "success] ";
@@ -238,11 +207,11 @@ struct pending {
 
 class TrainSystem {
  private:
-  BPlusTree<size_t, Train, 80, 80> TrainMap;
-  BPlusTree<id_date, train_seat, 128, 128> SeatMap;
-  MultiBPlusTree<size_t, station_train, 110, 110> StationPass;
-  MultiBPlusTree<size_t, order, 256, 256> OrderInfo;
-  MultiBPlusTree<id_date, pending, 150, 150> PendingInfo;
+  BPlusTree<size_t, Train> TrainMap;
+  BPlusTree<id_date, train_seat> SeatMap;
+  MultiBPlusTree<size_t, my_string<20>, station_train> StationPass;
+  MultiBPlusTree<size_t, int, order> OrderInfo;
+  MultiBPlusTree<id_date, int, pending> PendingInfo;
  public:
   TrainSystem(const std::string &name_1, const std::string &name_2,
               const std::string &name_3, const std::string &name_4,
@@ -286,7 +255,7 @@ class TrainSystem {
     size_t train_key = MyHash(train_id);
     Train res = TrainMap.find(train_key);
     if (res.stationNum == 0 || res.release_state) return false;
-    TrainMap.erase(train_key, res);
+    TrainMap.erase(train_key);
     return true;
   }
 
@@ -294,9 +263,11 @@ class TrainSystem {
     size_t train_key = MyHash(train_id);
     Train res = TrainMap.find(train_key);
     if (res.stationNum == 0 || res.release_state) return false;
-    TrainMap.erase(train_key, res), res.release_state = true, TrainMap.insert(train_key, res);
+    TrainMap.erase(train_key);
+    res.release_state = true;
+    TrainMap.insert(train_key, res);
     for (int i = 1; i <= res.stationNum; ++i) {
-      StationPass.insert(MyHash(res.stations[i]), station_train(res.leave_time[i], res.arrive_time[i],
+      StationPass.insert(MyHash(res.stations[i]), res.trainID, station_train(res.leave_time[i], res.arrive_time[i],
                                                         res.prices_sum[i], res.trainID,
                                                         i, res.startTime));
     }
@@ -515,7 +486,7 @@ class TrainSystem {
     station_train leave = StationPass.find_unique(MyHash(from), trainID);
     station_train arrive = StationPass.find_unique(MyHash(to), trainID);
     Train ret = TrainMap.find(MyHash(trainID));
-    if (ret.seatNum == 0 || leave.rank == 0 || arrive.rank == 0) {
+    if (ret.seatNum == 0 || leave.rank == 0 || arrive.rank == 0 || leave.rank >= arrive.rank || ret.seatNum < num) {
       return "-1";
     }
     Time start_left(ret.start_sale, ret.startTime / 60, ret.startTime % 60),
@@ -527,22 +498,22 @@ class TrainSystem {
       id_date todo(MyHash(trainID), real_start);
       train_seat seat_info = SeatMap.find(todo);
       if (available(seat_info, leave.rank, arrive.rank - 1) >= num) { // can satisfy need
-        SeatMap.erase(id_date(todo), seat_info);
+        SeatMap.erase(todo);
         satisfy_order(seat_info, leave.rank, arrive.rank - 1, num);
-        SeatMap.insert(id_date(todo), seat_info);
+        SeatMap.insert(todo, seat_info);
         Time start_time(date, start_left.now / 60, start_left.now % 60);
-        OrderInfo.insert(MyHash(username), order(Success, arrive.prices_sum - leave.prices_sum,
+        OrderInfo.insert(MyHash(username), -time + 2147483647, order(Success, arrive.prices_sum - leave.prices_sum,
                                          num, time, leave.rank, arrive.rank, username, trainID, from, to,
                                          start_time, start_time + (arrive.arrive - leave.leave), real_start));
         return std::to_string(num * (arrive.prices_sum - leave.prices_sum));
       } else {
         if (wait) {
           Time start_time(date, start_left.now / 60, start_left.now % 60);
-          OrderInfo.insert(MyHash(username),
+          OrderInfo.insert(MyHash(username), -time + 2147483647,
                            order(Pending, arrive.prices_sum - leave.prices_sum,
                                  num, time, leave.rank, arrive.rank, username, trainID, from, to, start_time,
                                  start_time + (arrive.arrive - leave.leave), real_start));
-          PendingInfo.insert(todo,
+          PendingInfo.insert(todo, time,
                              pending(num, time, leave.rank, arrive.rank, username, trainID));
           return "queue";
         } else { // can't buy tickets
@@ -569,26 +540,26 @@ class TrainSystem {
     if (ret.size() < num || ret[num - 1].state == Refunded) return false;
     order target(ret[num - 1]);
     TicketState origin = target.state;
-    OrderInfo.erase(user_key, target);
+    OrderInfo.erase(user_key, -target.time_stamp + 2147483647);
     target.state = Refunded;
-    OrderInfo.insert(user_key, target);
+    OrderInfo.insert(user_key, -target.time_stamp + 2147483647, target);
     id_date todo(MyHash(target.train_id), target.first_leave);
     if (origin == Pending) { // delete it from PendingInfo
-      PendingInfo.erase(todo, pending(target.time_stamp));
+      PendingInfo.erase(todo, target.time_stamp);
     } else { // return tickets and get successor
       train_seat seat_info = SeatMap.find(todo);
-      SeatMap.erase(todo, seat_info);
+      SeatMap.erase(todo);
       satisfy_order(seat_info, target.rank_s, target.rank_e - 1, -target.num);
       sjtu::vector<pending> wait_list = PendingInfo.find(todo);
       for (auto iter : wait_list) {
         if (available(seat_info, iter.start_rank, iter.end_rank - 1) >= iter.num) { // can fill the need
           size_t iter_hash = MyHash(iter.username);
-          target = OrderInfo.find_unique(iter_hash, iter.time_stamp);
-          OrderInfo.erase(iter_hash, target);
+          target = OrderInfo.find_unique(iter_hash, -iter.time_stamp + 2147483647);
+          OrderInfo.erase(iter_hash, -iter.time_stamp + 2147483647);
           target.state = Success;
           satisfy_order(seat_info, iter.start_rank, iter.end_rank - 1, iter.num);
-          OrderInfo.insert(iter_hash, target);
-          PendingInfo.erase(todo, pending(iter.time_stamp));
+          OrderInfo.insert(iter_hash, -iter.time_stamp + 2147483647, target);
+          PendingInfo.erase(todo, iter.time_stamp);
         }
       }
       SeatMap.insert(todo, seat_info);
@@ -602,5 +573,3 @@ class TrainSystem {
 };
 
 #endif
-
-

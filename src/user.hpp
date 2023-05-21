@@ -73,7 +73,7 @@ class User {
 
 class UserSystem {
  private:
-  BPlusTree<size_t, User, 150, 302> UserMap;
+  BPlusTree<size_t, User> UserMap;
   sjtu::map<std::string, int> LoginState;
  public:
   // 1 for successful operation and 0 for unsuccessful
@@ -156,7 +156,7 @@ class UserSystem {
       return "-1";
     }
     User target = UserMap.find(user_key), original = target;
-    if (LoginState.find(cur) == LoginState.end() || target.GetPrivilege() == -1 || LoginState[cur] <= target.GetPrivilege() && cur != username) {
+    if (LoginState.find(cur) == LoginState.end() || target.GetPrivilege() == -1 || LoginState[cur] <= target.GetPrivilege() && cur != username || new_privilege >= LoginState[cur]) {
       return "-1";
     }
     if (new_privilege != -1) {
@@ -168,7 +168,7 @@ class UserSystem {
     if (!new_password.empty()) target.ChangePassword(new_password);
     if (!new_name.empty()) target.ChangeName(new_name);
     if (!new_mailAddr.empty()) target.ChangeMail(new_mailAddr);
-    UserMap.erase(user_key, original), UserMap.insert(user_key, target);
+    UserMap.erase(user_key), UserMap.insert(user_key, target);
     std::string ans =
         username + ' ' + target.GetName() + ' ' + target.GetMailAddr() + ' ' + std::to_string(target.GetPrivilege());
     return ans;
