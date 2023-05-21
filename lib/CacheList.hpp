@@ -28,7 +28,6 @@ class CachePool {
         : address(address_), prev(prev_), next(next_) {}
   };
   class cache {
-   public:
    private:
     std::fstream &out;
    public:
@@ -158,7 +157,6 @@ class CachePool {
  public:
   CachePool(std::fstream &out_) : block_pool(out_) {}
   bool GetNode(T &todo, int id) {
-    // std::cout << id << '\n';
     cache_node *search = find(id).first;
     if (search) {
       todo = search->data;
@@ -168,6 +166,7 @@ class CachePool {
       return false;
     }
   }
+
   void InsertFront(const T &value) {
     auto res = block_pool.push_front(value);
     if (!res.second) {
@@ -175,13 +174,16 @@ class CachePool {
     }
     storage[find_valid(value.address)] = res.first;
   }
+
   void Erase(T &todo) {
     cache_node *temp = find(todo.address).first;
     Delete(temp);
   }
+
   void clear() {
     block_pool.ClearPool();
   }
+
   int size() {
     return block_pool.size;
   }

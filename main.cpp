@@ -1,6 +1,6 @@
 /*
- * @todo   1、减少外存使用！SeatMap第二关键字为哈希值
- *         2、加快速度，部署modify
+ * @todo 1、加快速度，部署modify
+ *       2、丰富文件结构
  */
 
 
@@ -11,8 +11,6 @@ std::string operation;
 
 int main() {
   srand(time(nullptr));
-//  freopen("1.in", "r", stdin);
-//  freopen("my_1.out", "w", stdout);
   std::ios::sync_with_stdio(false);
   std::cin.tie(nullptr), std::cout.tie(nullptr);
   Program TicketSystem;

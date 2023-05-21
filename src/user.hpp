@@ -168,7 +168,7 @@ class UserSystem {
     if (!new_password.empty()) target.ChangePassword(new_password);
     if (!new_name.empty()) target.ChangeName(new_name);
     if (!new_mailAddr.empty()) target.ChangeMail(new_mailAddr);
-    UserMap.erase(user_key), UserMap.insert(user_key, target);
+    UserMap.modify(user_key, target);
     std::string ans =
         username + ' ' + target.GetName() + ' ' + target.GetMailAddr() + ' ' + std::to_string(target.GetPrivilege());
     return ans;

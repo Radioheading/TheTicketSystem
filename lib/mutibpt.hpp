@@ -31,6 +31,7 @@ class MultiBPlusTree {
     inline friend bool operator==(const Index &cmp_1, const Index &cmp_2) {
       return cmp_1.key == cmp_2.key && cmp_1.key_1 == cmp_2.key_1;
     }
+
     explicit Index(const Key &_key = Key(), const Key1 &_key1 = Key1()) : key(_key), key_1(_key1) {}
   };
   struct element {
@@ -44,15 +45,18 @@ class MultiBPlusTree {
     inline friend bool operator==(const element &cmp_1, const element &cmp_2) {
       return cmp_1.index == cmp_2.index;
     }
+
     element &operator=(const element &obj) {
       if (&obj == this) return *this;
       index = obj.index;
       value = obj.value;
       return *this;
     }
+
     element() : index(Index()), value(T()) {}
     element(const Key &_key, const Key1 &_key1, const T &number) : index(_key, _key1), value(number) {}
   };
+
   struct node {
     int address = 0;
     bool changed = false;
@@ -104,7 +108,6 @@ class MultiBPlusTree {
     current_node = root;
     while (current_node.state != leaf) {
       if (current_node.son_num == 0) {
-        // std::cout << "no son!\n";
         return ret;
       }
       int place = LBound(another.index, current_node.index, 0, current_node.son_num - 2);
@@ -112,7 +115,6 @@ class MultiBPlusTree {
       WriteNode(current_node);
     }
     if (current_node.son_num == 0) {
-      // std::cout << "no data!\n";
       return ret;
     }
     int search = LBound(another.index, current_node.index, 0, current_node.son_num - 2);
@@ -120,7 +122,6 @@ class MultiBPlusTree {
     int pos = LowerBound(another, current_leaf.storage, 0, current_leaf.data_num - 1);
     while (true) {
       for (int i = pos; i < current_leaf.data_num; ++i) {
-        // std::cout << "checking: " << current_leaf.storage[i].index.key << ' ' << current_leaf.storage[i].index.key_1 << '\n';
         if (current_leaf.storage[i].index.key == key) {
           ret.push_back(current_leaf.storage[i].value);
         } else {
@@ -137,6 +138,10 @@ class MultiBPlusTree {
     return ret;
   }
 
+  /*
+   * ----------------------------function: find_unique---------------------------------
+   * usage: find the exact element with the same key, key_1
+   */
   T find_unique(const Key &key, const Key1 &key_1) {
     element another(key, key_1, T());
     current_node = root;
@@ -160,6 +165,34 @@ class MultiBPlusTree {
     } else {
       WriteLeaves(current_leaf);
       return another.value;
+    }
+  }
+
+  void modify(const Key &key, const Key1 &key_1, const T &val) {
+    element another(key, key_1, T());
+    current_node = root;
+    while (current_node.state != leaf) {
+      if (current_node.son_num == 0) {
+        return;
+      }
+      int place = LBound(another.index, current_node.index, 0, current_node.son_num - 2);
+      ReadNode(current_node, current_node.son_pos[place]);
+      WriteNode(current_node);
+    }
+    if (current_node.son_num == 0) {
+      return;
+    }
+    int search = LBound(another.index, current_node.index, 0, current_node.son_num - 2);
+    ReadLeaf(current_leaf, current_node.son_pos[search]);
+    int pos = LowerBound(another, current_leaf.storage, 0, current_leaf.data_num - 1);
+    if (pos < current_leaf.data_num && current_leaf.storage[pos].index == another.index) {
+      current_leaf.storage[pos].value = val;
+      current_leaf.changed = true;
+      WriteLeaves(current_leaf);
+      return;
+    } else {
+      WriteLeaves(current_leaf);
+      return;
     }
   }
 
@@ -262,7 +295,6 @@ class MultiBPlusTree {
       todo_leaf.storage[search] = another;
       ++todo_leaf.data_num, todo_leaf.changed = true;
       if (todo_leaf.data_num == max_size) {// block splitting
-        // std::cout << "block splitting\n";
         leaves new_block(false);
         new_block.data_num = min_size, todo_leaf.data_num = min_size;
         for (int i = 1; i <= min_size; ++i) {
@@ -363,14 +395,12 @@ class MultiBPlusTree {
       }
       --todo_leaf.data_num, todo_leaf.changed = true;
       if (todo_leaf.data_num < min_size) {
-        // std::cout << "leaf adjusting" << '\n';
         // leaf adjusting
         todo.changed = true;
         leaves before, after;
         if (pos < todo.son_num - 1) { // borrowing behind
           ReadLeaf(after, todo.son_pos[pos + 1]);
           if (after.data_num > min_size) { // can borrow
-            //std::cout << "borrowing behind\n";
             todo_leaf.storage[todo_leaf.data_num] = after.storage[0];
             ++todo_leaf.data_num;
             for (int i = 1; i < after.data_num; ++i) {
@@ -385,7 +415,6 @@ class MultiBPlusTree {
         if (pos > 0) { // borrowing front
           ReadLeaf(before, todo.son_pos[pos - 1]);
           if (before.data_num > min_size) {// can borrow
-            // std::cout << "borrowing front\n";
             if (after.address) {
               WriteLeaves(after);
             }
@@ -404,7 +433,6 @@ class MultiBPlusTree {
             WriteLeaves(before);
           }
           // merging the one behind
-          // std::cout << "merging behind\n";
           for (int i = 1; i <= after.data_num; ++i) {
             todo_leaf.storage[todo_leaf.data_num + i - 1] = after.storage[i - 1];
           }
@@ -429,7 +457,6 @@ class MultiBPlusTree {
             WriteLeaves(after);
           }
           // merging the one at front
-          // std::cout << "merging front\n";
           for (int i = 1; i <= todo_leaf.data_num; ++i) {
             before.storage[before.data_num + i - 1] = todo_leaf.storage[i - 1];
           }
@@ -451,7 +478,6 @@ class MultiBPlusTree {
           }
         }
         // only son, can't do anything
-        // std::cout << "only son\n";
         WriteNode(todo), WriteLeaves(todo_leaf);
         return true;
       } else {
@@ -460,7 +486,6 @@ class MultiBPlusTree {
         return true;
       }
     } else {
-      // std::cout << "adjusting node\n";
       node todo_node;
       ReadNode(todo_node, todo.son_pos[pos]);
       if (InternalErase(another, todo_node)) {
@@ -473,7 +498,6 @@ class MultiBPlusTree {
         if (pos < todo.son_num - 1) { // borrowing behind
           ReadNode(after, todo.son_pos[pos + 1]);
           if (after.son_num > min_son) { // can borrow
-            // std::cout << "borrowing behind\n";
             todo_node.son_pos[todo_node.son_num] = after.son_pos[0];
             todo_node.index[todo_node.son_num - 1] = todo.index[pos], todo.index[pos] = after.index[0];
             ++todo_node.son_num;
@@ -491,7 +515,6 @@ class MultiBPlusTree {
         if (pos > 0) { // borrowing front
           ReadNode(before, todo.son_pos[pos - 1]);
           if (before.son_num > min_son) { // can borrow
-            // std::cout << "borrowing front\n";
             if (after.address) {
               WriteNode(after);
             }
@@ -515,7 +538,6 @@ class MultiBPlusTree {
             WriteNode(before);
           }
           // merging the one behind
-          // std::cout << "merging behind\n";
           for (int i = 1; i <= after.son_num; ++i) {
             todo_node.son_pos[todo_node.son_num + i - 1] = after.son_pos[i - 1];
           }
@@ -544,7 +566,6 @@ class MultiBPlusTree {
             WriteNode(after);
           }
           // merging the one at front
-          // std::cout << "merging front\n";
           for (int i = 1; i <= todo_node.son_num; ++i) {
             before.son_pos[before.son_num + i - 1] = todo_node.son_pos[i - 1];
           }
@@ -604,5 +625,5 @@ class MultiBPlusTree {
     tree.write(reinterpret_cast<char *>(&tree_begin), sizeof(tree_begin));
   }
 };
-#endif //BPT_HPP_
+#endif //MULTIBPT_HPP_
 

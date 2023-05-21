@@ -7,6 +7,10 @@
 #include <cmath>
 #include "../src/train.hpp"
 
+/*
+ * ------------------------------class: my_string---------------------------------
+ * namely a string with constant length, so that it can be written in binary files
+ */
 template<int length>
 class my_string {
  public:
@@ -38,8 +42,10 @@ class my_string {
   }
 };
 
-// data_translating
-
+/*
+ * -----------------------------class: Date---------------------------------
+ * namely a Date class enabling simple add, minus, comparing functions
+ */
 int sum[15] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365};
 class Date {
   friend class Time;
@@ -162,10 +168,14 @@ int operator-(const Date &minus_1, const Date &minus_2) {
   return minus_1.current - minus_2.current;
 }
 
+/*
+ * --------------------------class: Time-----------------------------
+ * A Class with date and time during the day, also equipped with basic
+ * add/minus/comparing functions
+ */
 class Time {
  public:
-  friend class train_system;
-  int now;
+  int now; // the daytime (range from 0 to 1439)
   Date day;
  public:
   explicit Time(Date _day = Date(), int _hour = 0, int _minute = 0) : day(_day), now(_hour * 60 + _minute) {}
@@ -240,6 +250,10 @@ class Time {
   }
 };
 
+/*------------------------------function: sort------------------------------------
+ * can sort a vector by using a method similar to std::sort
+ * moreover, random strategy is deployed as conventional quick_sort may be O(n^2)
+ */
 template<class iterator, class Compare = std::less<typename iterator::value_type>>
 void sort(iterator left, iterator right, Compare cmp = Compare{}) {
   if (left - right >= -1) return;
@@ -259,6 +273,10 @@ void sort(iterator left, iterator right, Compare cmp = Compare{}) {
   sort(left, r, cmp), sort(r + 1, right, cmp);
 }
 
+/*
+ * ------------------------------function: MyHash------------------------------------------
+ * A basic hash function to turn std::string/my_string to size_t, enabling faster comparing
+ */
 template<int size>
 size_t MyHash(const my_string<size> &todo) {
   size_t ret = 0;
