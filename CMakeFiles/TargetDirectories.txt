@@ -1,3 +1,0 @@
-/home/brucelee/CS1951_DataStructures/TheTicketSystem/CMakeFiles/rebuild_cache.dir
-/home/brucelee/CS1951_DataStructures/TheTicketSystem/CMakeFiles/edit_cache.dir
-/home/brucelee/CS1951_DataStructures/TheTicketSystem/CMakeFiles/code.dir
