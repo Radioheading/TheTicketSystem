@@ -9,7 +9,6 @@
 #include "../lib/mutibpt.hpp"
 #include "../lib/exceptions.hpp"
 #include "../lib/vector.hpp"
-#include <unordered_map>
 
 const int max_info = 101;
 
@@ -51,7 +50,7 @@ struct Train {
 
 struct train_seat {
   Date start_date; // we store the day when the train departs
-  int station_num = 0, seat_num = -1;
+  int station_num{0}, seat_num{-1};
   int seat[max_info - 1]{};
 
   train_seat(int _station_num, int _seat_num, const Date &_start_date)
@@ -271,9 +270,6 @@ class TrainSystem {
                                                                              res.prices_sum[i], res.trainID,
                                                                              i, res.startTime));
     }
-    for (Date iter = res.start_sale; iter <= res.end_sale; ++iter) {
-      SeatMap.insert(id_date(train_key, iter), train_seat(res.stationNum, res.seatNum, iter));
-    }
     return true;
   }
 
@@ -285,6 +281,12 @@ class TrainSystem {
     } else {
       std::string ans;
       train_seat the_seat = SeatMap.find(id_date(train_key, date));
+      if (!the_seat.station_num) {
+        for (int i = 0; i < ret.stationNum; ++i) {
+          the_seat.seat[i] = ret.seatNum;
+        }
+        the_seat.seat_num = ret.seatNum, the_seat.station_num = ret.stationNum;
+      }
       ans += (std::string) ret.trainID + ' ' + ret.type;
       for (int i = 1; i <= ret.stationNum; ++i) {
         ans += '\n' + (std::string) ret.stations[i] + ' ';
@@ -331,6 +333,12 @@ class TrainSystem {
         if (leq_day(start_left, date) && geq_day(start_right, date) && ret.release_state) { // totally right
           Date real_start = ret.start_sale + (date - start_left.day);
           train_seat the_seat = SeatMap.find(id_date(MyHash(ret.trainID), real_start));
+          if (!the_seat.station_num) {
+            for (int i = 0; i < ret.stationNum; ++i) {
+              the_seat.seat[i] = ret.seatNum;
+            }
+            the_seat.seat_num = ret.seatNum, the_seat.station_num = ret.stationNum;
+          }
           tickets.push_back(ticket_info(ret.trainID,
                                         Time(date, start_left.now / 60, start_left.now % 60),
                                         Time(date, start_left.now / 60, start_left.now % 60)
@@ -377,6 +385,12 @@ class TrainSystem {
       if (!leq_day(left, date) || !geq_day(right, date)) continue;
       Date s_start = train_s.start_sale + (date - left.day);
       train_seat s_seat = SeatMap.find(id_date(s_iter.id_key, train_s.start_sale + (date - left.day))), t_seat;
+      if (!s_seat.station_num) {
+        for (int i = 0; i < train_s.stationNum; ++i) {
+          s_seat.seat[i] = train_s.seatNum;
+        }
+        s_seat.station_num = train_s.stationNum, s_seat.seat_num = train_s.seatNum;
+      }
       sjtu::map<std::string, int> station_list;
       for (int i = s_iter.rank + 1; i <= train_s.stationNum; ++i) {
         station_list[std::string(train_s.stations[i])] = i;
@@ -415,6 +429,12 @@ class TrainSystem {
             t_seat = end_trains[todo];
           } else {
             t_seat = SeatMap.find(todo);
+            if (!t_seat.station_num) {
+              for (int j = 0; j < train_t.stationNum; ++j) {
+                t_seat.seat[j] = train_t.seatNum;
+              }
+              t_seat.station_num = train_t.stationNum, t_seat.seat_num = train_t.seatNum;
+            }
             end_trains[todo] = t_seat;
           }
           // begin comparing
@@ -497,8 +517,16 @@ class TrainSystem {
       // std::cout << "date: " << real_start << '\n';
       id_date todo(MyHash(trainID), real_start);
       train_seat seat_info = SeatMap.find(todo);
+      bool is_empty = false;
+      if (!seat_info.station_num) {
+        is_empty = true;
+        for (int i = 0; i < ret.stationNum; ++i) {
+          seat_info.seat[i] = ret.seatNum;
+        }
+        seat_info.station_num = ret.stationNum, seat_info.seat_num = ret.seatNum;
+      }
       if (available(seat_info, leave.rank, arrive.rank - 1) >= num) { // can satisfy need
-        SeatMap.erase(todo);
+        if (!is_empty) SeatMap.erase(todo);
         satisfy_order(seat_info, leave.rank, arrive.rank - 1, num);
         SeatMap.insert(todo, seat_info);
         Time start_time(date, start_left.now / 60, start_left.now % 60);
@@ -547,7 +575,7 @@ class TrainSystem {
     if (origin == Pending) { // delete it from PendingInfo
       PendingInfo.erase(todo, target.time_stamp);
     } else { // return tickets and get successor
-      train_seat seat_info = SeatMap.find(todo);
+      train_seat seat_info = SeatMap.find(todo); // obviously it has been inserted before
       SeatMap.erase(todo);
       satisfy_order(seat_info, target.rank_s, target.rank_e - 1, -target.num);
       sjtu::vector<pending> wait_list = PendingInfo.find(todo);

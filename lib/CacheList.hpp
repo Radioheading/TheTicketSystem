@@ -13,7 +13,7 @@ using std::pair;
 
 template<class T>
 class CachePool {
-  static const int max_cache = 95 * 1024 / sizeof(T); // to satisfy cache size limit
+  static const int max_cache = 90 * 1024 / sizeof(T); // to satisfy cache size limit
   static const int map_size = 10140;
   static const int mod = 10133;
   constexpr static const int rehash[20] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};
