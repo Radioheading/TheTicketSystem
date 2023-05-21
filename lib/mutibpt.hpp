@@ -73,7 +73,6 @@ class MultiBPlusTree {
     int end_place = sizeof(begin_tree) + sizeof(node);
   } tree_begin;
   struct begin_data {
-    int start_place = sizeof(begin_data);
     int end_place = sizeof(begin_data);
   } data_begin;
   const int node_size = sizeof(node);

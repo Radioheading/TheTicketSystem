@@ -14,14 +14,14 @@
 const int max_info = 101;
 
 struct Train {
-  bool release_state = false;
-  my_string<20> trainID{};
+  Date start_sale{}, end_sale{};
   int stationNum = 0, seatNum = 0, startTime = 0;
+  bool release_state = false;
+  char type{};
+  my_string<20> trainID{};
   my_string<40> stations[max_info]{};
   int prices_sum[max_info]{};
   int leave_time[max_info]{}, arrive_time[max_info]{0};
-  Date start_sale{}, end_sale{};
-  char type{};
 
   Train() = default;
 
@@ -50,8 +50,9 @@ struct Train {
 };
 
 struct train_seat {
-  int seat[max_info - 1]{}, station_num = 0, seat_num = -1;
   Date start_date; // we store the day when the train departs
+  int station_num = 0, seat_num = -1;
+  int seat[max_info - 1]{};
 
   train_seat(int _station_num, int _seat_num, const Date &_start_date)
       : station_num(_station_num), seat_num(_seat_num), start_date(_start_date) {
@@ -103,19 +104,19 @@ struct id_date {
 
 struct station_train {
   size_t id_key{};
-  int leave = 0, arrive = 0, prices_sum = 0, rank = 0, start_time = 0;
+  int leave = 0, arrive = 0, prices_sum = 0, rank = 0;
   my_string<20> train_id;
   station_train() = default;
   explicit station_train(const std::string &_train_id) : train_id(_train_id) {}
   station_train(int _leave, int _arrive, int _sum, const my_string<20> &id, int _rank, int _start_time)
-      : leave(_leave), arrive(_arrive), prices_sum(_sum), rank(_rank), start_time(_start_time),
+      : leave(_leave), arrive(_arrive), prices_sum(_sum), rank(_rank),
         train_id(id), id_key(MyHash(id)) {};
 };
 
 struct ticket_info {
+  int price{}, seat{}, duration{};
   my_string<20> train_id;
   Time depart, arrive;
-  int price{}, seat{}, duration{};
 
   ticket_info() = default;
 
@@ -187,14 +188,13 @@ struct order {
 
 struct pending {
   int num{}, time_stamp{}, start_rank{}, end_rank{};
-  my_string<20> username, train_id;
+  my_string<20> username;
 
   explicit pending(int _time_stamp = 0) : time_stamp(_time_stamp) {};
   pending(int _num, int _time_stamp, int _start_rank,
-          int _end_rank, const std::string &_username,
-          const std::string &_train_id) : num(_num), time_stamp(_time_stamp),
+          int _end_rank, const std::string &_username) : num(_num), time_stamp(_time_stamp),
                                           start_rank(_start_rank), end_rank(_end_rank),
-                                          username(_username), train_id(_train_id) {}
+                                          username(_username) {}
 
   friend bool operator<(const pending &cmp_1, const pending &cmp_2) {
     return cmp_1.time_stamp < cmp_2.time_stamp;
@@ -514,7 +514,7 @@ class TrainSystem {
                                  num, time, leave.rank, arrive.rank, username, trainID, from, to, start_time,
                                  start_time + (arrive.arrive - leave.leave), real_start));
           PendingInfo.insert(todo, time,
-                             pending(num, time, leave.rank, arrive.rank, username, trainID));
+                             pending(num, time, leave.rank, arrive.rank, username));
           return "queue";
         } else { // can't buy tickets
           return "-1";
