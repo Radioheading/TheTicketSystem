@@ -42,7 +42,7 @@ int LBound(const T &val, T *array, int l, int r) {
 template<class Key, class T>
 class BPlusTree {
   struct element;
-  static const int max_size = std::max((int) (2048 / sizeof(element) * 2), 4), min_size = max_size >> 1;
+  static const int max_size = std::max((int) (2048 / sizeof(element) * 2), 2), min_size = max_size >> 1;
   static const int max_son = 2048 / sizeof(Key) * 2, min_son = max_son >> 1;
   enum NodeState { leaf, middle };
  private:
