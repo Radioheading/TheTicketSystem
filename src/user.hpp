@@ -10,7 +10,7 @@ class User {
  private:
   my_string<20> username;
   my_string<30> password;
-  my_string<20> name;
+  my_string<15> name;
   my_string<30> mailAddr;
   int privilege = -1; // to check the default constructor
  public:

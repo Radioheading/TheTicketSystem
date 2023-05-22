@@ -8,3 +8,5 @@ files/
 run/
 *.db
 run.shell
+CMakeFiles/
+Makefile

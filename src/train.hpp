@@ -18,7 +18,7 @@ struct Train { // the basic information of a train
   bool release_state = false;
   char type{};
   my_string<20> trainID{};
-  my_string<40> stations[max_info]{};
+  my_string<30> stations[max_info]{};
   int prices_sum[max_info]{};
   int leave_time[max_info]{}, arrive_time[max_info]{0};
 
@@ -153,7 +153,7 @@ struct order {
   TicketState state = Success;
   int price{}, num{}, time_stamp{}, rank_s{}, rank_e{};
   my_string<20> train_id;
-  my_string<40> from, to;
+  my_string<30> from, to;
   Time departure, arrival;
   Date first_leave;
 
