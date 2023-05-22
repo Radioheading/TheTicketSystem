@@ -16,7 +16,7 @@ SJTU CS1951课程大作业
 
 4、**火车系统**：火车系统中存储了火车信息、各车次座位余量信息、各车站经过火车信息、各用户订单信息、各车次候补订单信息（均在外存），可以进行加入火车、删除火车、发布火车、查询车票、查询车次、查询换乘、购票、查询订单、退票等功能。
 
-指令的具体信息和规则请见[管理系统文档]([Ticket-System/management_system.md at master · ACMClassCourse-2022/Ticket-System · GitHub](https://github.com/ACMClassCourse-2022/Ticket-System/blob/master/management_system.md))
+指令的具体信息和规则请见[管理系统文档](https://github.com/ACMClassCourse-2022/Ticket-System/blob/master/management_system.md)
 
 ## 代码文件结构
 
