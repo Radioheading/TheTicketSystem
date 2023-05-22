@@ -5,7 +5,6 @@
 #include "../lib/bpt.hpp"
 #include "../lib/map.hpp"
 #include "../lib/exceptions.hpp"
-#include <unordered_map>
 
 using namespace Lee;
 
@@ -13,7 +12,7 @@ class User {
  private:
   my_string<20> username;
   my_string<30> password;
-  my_string<15> name;
+  my_string<20> name;
   my_string<30> mailAddr;
   int privilege = -1; // to check the default constructor
  public:
@@ -77,7 +76,7 @@ class User {
 class UserSystem {
  private:
   BPlusTree<size_t, User> UserMap;
-  std::unordered_map<std::string, int> LoginState;
+  map<std::string, int> LoginState;
  public:
   // 1 for successful operation and 0 for unsuccessful
   UserSystem(const std::string &name_1, const std::string &name_2) : UserMap(name_1, name_2) {}

@@ -20,7 +20,7 @@ struct Train { // the basic information of a train
   bool release_state = false;
   char type{};
   my_string<20> trainID{};
-  my_string<30> stations[max_info]{};
+  my_string<40> stations[max_info]{};
   int prices_sum[max_info]{};
   int leave_time[max_info]{}, arrive_time[max_info]{0};
 
@@ -110,7 +110,7 @@ struct station_train { // the basic information of a train passing a given stati
   my_string<20> train_id;
   station_train() = default;
   explicit station_train(const std::string &_train_id) : train_id(_train_id) {}
-  station_train(int _leave, int _arrive, int _sum, const my_string<20> &id, int _rank)
+  station_train(int _leave, int _arrive, int _sum, const my_string<20> &id, int _rank, int _start_time)
       : leave(_leave), arrive(_arrive), prices_sum(_sum), rank(_rank),
         train_id(id), id_key(MyHash(id)) {};
 };
@@ -155,7 +155,7 @@ struct order {
   TicketState state = Success;
   int price{}, num{}, time_stamp{}, rank_s{}, rank_e{};
   my_string<20> train_id;
-  my_string<30> from, to;
+  my_string<40> from, to;
   Time departure, arrival;
   Date first_leave;
 
@@ -268,7 +268,8 @@ class TrainSystem {
     TrainMap.modify(train_key, res);
     for (int i = 1; i <= res.stationNum; ++i) {
       StationPass.insert(MyHash(res.stations[i]), res.trainID, station_train(res.leave_time[i], res.arrive_time[i],
-                                                                             res.prices_sum[i], res.trainID, i));
+                                                                             res.prices_sum[i], res.trainID,
+                                                                             i, res.startTime));
     }
     return true;
   }
@@ -369,7 +370,7 @@ class TrainSystem {
     std::string ret;
     vector<station_train> s_list = StationPass.find(MyHash(start));
     vector<station_train> t_list = StationPass.find(MyHash(end));
-    std::unordered_map<std::string, Train> end_list; // reduce redundant I/O
+    map<my_string<20>, Train> end_list; // reduce redundant I/O
     map<id_date, train_seat> end_trains;
     int best_time = 2147483647, best_cost = 2147483647;
     std::string mid_transport;
@@ -383,6 +384,7 @@ class TrainSystem {
       Time right(train_s.end_sale, train_s.startTime / 60, train_s.startTime % 60);
       left += s_iter.leave, right += s_iter.leave;
       if (!leq_day(left, date) || !geq_day(right, date)) continue;
+      Date s_start = train_s.start_sale + (date - left.day);
       train_seat s_seat = SeatMap.find(id_date(s_iter.id_key, train_s.start_sale + (date - left.day))), t_seat;
       if (!s_seat.station_num) {
         for (int i = 0; i < train_s.stationNum; ++i) {
@@ -390,18 +392,18 @@ class TrainSystem {
         }
         s_seat.station_num = train_s.stationNum, s_seat.seat_num = train_s.seatNum;
       }
-      std::unordered_map<std::string, int> station_list;
+      map<std::string, int> station_list;
       for (int i = s_iter.rank + 1; i <= train_s.stationNum; ++i) {
         station_list[std::string(train_s.stations[i])] = i;
       }
       for (auto t_iter : t_list) {
         if (s_iter.train_id == t_iter.train_id) continue;
         // must have one transfer
-        if (end_list.find(std::string(t_iter.train_id)) == end_list.end()) { // read from disk
+        if (end_list.find(t_iter.train_id) == end_list.end()) { // read from disk
           train_t = TrainMap.find(t_iter.id_key);
-          end_list[std::string(t_iter.train_id)] = train_t;
+          end_list[t_iter.train_id] = train_t;
         } else {
-          train_t = end_list[std::string(t_iter.train_id)];
+          train_t = end_list[t_iter.train_id];
         }
         for (int i = 1; i < t_iter.rank; ++i) { // enumerate the transfer station
           std::string mid = std::string(train_t.stations[i]);
