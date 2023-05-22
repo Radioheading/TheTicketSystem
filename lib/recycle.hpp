@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 
+namespace Lee {
 const int max_bin = 100;
 
 struct before {
@@ -50,4 +51,5 @@ class bin {
     store.size = 0;
   }
 };
+}
 #endif //BPT__RECYCLE_HPP_

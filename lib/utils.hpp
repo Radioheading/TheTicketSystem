@@ -11,6 +11,7 @@
  * ------------------------------class: my_string---------------------------------
  * namely a string with constant length, so that it can be written in binary files
  */
+namespace Lee {
 template<int length>
 class my_string {
  public:
@@ -291,5 +292,6 @@ size_t MyHash(const std::string &todo) {
     ret = ret * 263 + todo[i];
   }
   return ret;
+}
 }
 #endif

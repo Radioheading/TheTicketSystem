@@ -5,6 +5,9 @@
 #include "../lib/bpt.hpp"
 #include "../lib/map.hpp"
 #include "../lib/exceptions.hpp"
+#include <unordered_map>
+
+using namespace Lee;
 
 class User {
  private:
@@ -74,7 +77,7 @@ class User {
 class UserSystem {
  private:
   BPlusTree<size_t, User> UserMap;
-  sjtu::map<std::string, int> LoginState;
+  std::unordered_map<std::string, int> LoginState;
  public:
   // 1 for successful operation and 0 for unsuccessful
   UserSystem(const std::string &name_1, const std::string &name_2) : UserMap(name_1, name_2) {}
@@ -132,7 +135,7 @@ class UserSystem {
   }
 
   std::string query_profile(const std::string &cur, const std::string &username) {
-    size_t user_key = MyHash(username);;
+    size_t user_key = MyHash(username);
     if (LoginState.count(cur) == 0) {
       return "-1";
     }
@@ -155,7 +158,7 @@ class UserSystem {
     if (LoginState.find(cur) == LoginState.end()) {
       return "-1";
     }
-    User target = UserMap.find(user_key), original = target;
+    User target = UserMap.find(user_key);
     if (LoginState.find(cur) == LoginState.end() || target.GetPrivilege() == -1 || LoginState[cur] <= target.GetPrivilege() && cur != username || new_privilege >= LoginState[cur]) {
       return "-1";
     }

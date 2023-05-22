@@ -8,6 +8,7 @@
 #include "recycle.hpp"
 #include "vector.hpp"
 
+namespace Lee {
 /*
  * @supplementary functions
  * these are several means to locate specific element
@@ -630,4 +631,5 @@ class BPlusTree {
     tree.write(reinterpret_cast<char *>(&tree_begin), sizeof(tree_begin));
   }
 };
+}
 #endif //BPT_HPP_

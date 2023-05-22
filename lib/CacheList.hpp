@@ -5,6 +5,7 @@
 #include <iostream>
 
 using std::pair;
+namespace Lee {
 /*
  * @class CacheList
  * this is a simulation of the LRU policy, using a hashmap and a linklist to save the
@@ -13,7 +14,7 @@ using std::pair;
 
 template<class T>
 class CachePool {
-  static const int max_cache = 60 * 1024 / sizeof(T); // to satisfy cache size limit
+  static const int max_cache = 120 * 1024 / sizeof(T); // to satisfy cache size limit
   static const int map_size = 10140;
   static const int mod = 10133;
   constexpr static const int rehash[20] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};
@@ -188,4 +189,5 @@ class CachePool {
     return block_pool.size;
   }
 };
+}
 #endif //BPT__CACHELIST_HPP_

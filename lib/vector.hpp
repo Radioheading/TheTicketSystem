@@ -5,7 +5,7 @@
 #include <climits>
 #include <cstddef>
 
-namespace sjtu {
+namespace Lee {
 /**
  * a data container like std::vector
  * store data in a successive memory and support random access.
@@ -93,7 +93,7 @@ class vector {
     // return the distance between two iterators,
     // if these two iterators point to different vectors, throw invalid_iterator.
     int operator-(const iterator &rhs) const {
-      if (from != rhs.from) throw invalid_iterator();
+      if (from != rhs.from) throw sjtu::invalid_iterator();
       return (difference_type) (position - rhs.position);
     }
     iterator &operator+=(const int &n) {
@@ -187,7 +187,7 @@ class vector {
     // return the distance between two iterators,
     // if these two iterators point to different vectors, throw invalid_iterator.
     int operator-(const const_iterator &rhs) const {
-      if (from != rhs.from) throw invalid_iterator();
+      if (from != rhs.from) throw sjtu::invalid_iterator();
       return (position - rhs.position);
     }
     const_iterator &operator+=(const int &n) {
@@ -297,11 +297,11 @@ class vector {
    * throw index_out_of_bound if pos is not in [0, size)
    */
   T &at(const size_t &pos) {
-    if (pos < 0 || pos >= current) throw index_out_of_bound();
+    if (pos < 0 || pos >= current) throw sjtu::index_out_of_bound();
     return data[pos];
   }
   const T &at(const size_t &pos) const {
-    if (pos < 0 || pos >= current) throw index_out_of_bound();
+    if (pos < 0 || pos >= current) throw sjtu::index_out_of_bound();
     return data[pos];
   }
   /**
@@ -311,11 +311,11 @@ class vector {
    *   In STL this operator does not check the boundary but I want you to do.
    */
   T &operator[](const size_t &pos) {
-    if (pos < 0 || pos >= current) throw index_out_of_bound();
+    if (pos < 0 || pos >= current) throw sjtu::index_out_of_bound();
     return data[pos];
   }
   const T &operator[](const size_t &pos) const {
-    if (pos < 0 || pos >= current) throw index_out_of_bound();
+    if (pos < 0 || pos >= current) throw sjtu::index_out_of_bound();
     return data[pos];
   }
   /**
@@ -323,7 +323,7 @@ class vector {
    * throw container_is_empty if size == 0
    */
   const T &front() const {
-    if (current == 0) throw container_is_empty();
+    if (current == 0) throw sjtu::container_is_empty();
     return data[0];
   }
   /**
@@ -331,7 +331,7 @@ class vector {
    * throw container_is_empty if size == 0
    */
   const T &back() const {
-    if (current == 0) throw container_is_empty();
+    if (current == 0) throw sjtu::container_is_empty();
     return data[current - 1];
   }
   /**
@@ -394,7 +394,7 @@ class vector {
    * throw index_out_of_bound if ind > size (in this situation ind can be size because after inserting the size will increase 1.)
    */
   iterator insert(const size_t &ind, const T &value) {
-    if (ind > size()) throw index_out_of_bound();
+    if (ind > size()) throw sjtu::index_out_of_bound();
     iterator insert_iter(ind, this);
     if (current + 1 == capacity) ChangeSize();
     new(data + current) T(data[current - 1]);
@@ -424,7 +424,7 @@ class vector {
    * throw index_out_of_bound if ind >= size
    */
   iterator erase(const size_t &ind) {
-    if (ind >= size()) throw index_out_of_bound();
+    if (ind >= size()) throw sjtu::index_out_of_bound();
     data[ind].~T();
     for (int i = ind; i < current - 1; ++i) {
       data[i] = data[i + 1];
@@ -446,7 +446,7 @@ class vector {
    * throw container_is_empty if size() == 0
    */
   void pop_back() {
-    if (current == 0) throw container_is_empty();
+    if (current == 0) throw sjtu::container_is_empty();
     --current;
     data[current].~T();
   }

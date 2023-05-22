@@ -4,6 +4,8 @@
 #include "user.hpp"
 #include "../lib/tokenscanner.hpp"
 
+using namespace Lee;
+
 class Program {
  private:
   UserSystem user_system;

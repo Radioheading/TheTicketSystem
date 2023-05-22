@@ -28,7 +28,8 @@ using std::pair;
 //todo: check the delete problem (fixed)
 //todo: check operator[](reference) (fixed, due to the absence of return in NodeInsert)
 
-namespace sjtu {
+namespace Lee {
+using namespace sjtu;
 enum assign_check {
   yes, no
 };

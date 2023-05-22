@@ -9,6 +9,7 @@
 #include "vector.hpp"
 #include "bpt.hpp"
 
+namespace Lee {
 template<class Key, class Key1, class T>
 class MultiBPlusTree {
   struct Index;
@@ -102,9 +103,9 @@ class MultiBPlusTree {
     tree.write(reinterpret_cast<char *>(&root), node_size);
   };
 
-  sjtu::vector<T> find(const Key &key) {
+  vector<T> find(const Key &key) {
     element another(key, Key1(), T());
-    sjtu::vector<T> ret;
+    vector<T> ret;
     current_node = root;
     while (current_node.state != leaf) {
       if (current_node.son_num == 0) {
@@ -625,5 +626,6 @@ class MultiBPlusTree {
     tree.write(reinterpret_cast<char *>(&tree_begin), sizeof(tree_begin));
   }
 };
+}
 #endif //MULTIBPT_HPP_
 

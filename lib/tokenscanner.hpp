@@ -4,6 +4,14 @@
 #include <string>
 #include <cstring>
 
+namespace Lee {
+/*
+ * ------------------------class: TokenScanner-------------------
+ * it can divide a string based on the given separator,
+ * its functions include HasMoreToken, NextToken, NextInteger and
+ * GetChar, and you can reset the source string and separator by
+ * function set
+ */
 class TokenScanner {
  private:
   std::string info;
@@ -60,5 +68,5 @@ class TokenScanner {
     return info[pos++];
   }
 };
-
+}
 #endif
